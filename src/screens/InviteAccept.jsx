@@ -89,7 +89,7 @@ export default function InviteAccept({ inviteId, onDone }) {
             <div style={{ fontSize: 36, marginBottom: 12 }}>❌</div>
             <div style={{ fontFamily: SF, fontSize: 20, color: C.vinho, marginBottom: 8 }}>Convite inválido</div>
             <div style={{ fontSize: 13, color: C.taupe, marginBottom: 20 }}>{error}</div>
-            <button onClick={() => window.location.href = "/bella-gravidez/"} style={{
+            <button onClick={() => window.location.href = "/"} style={{
               padding: "12px 24px", background: C.vinho, color: C.bege, border: "none",
               borderRadius: 14, fontSize: 13, cursor: "pointer",
             }}>

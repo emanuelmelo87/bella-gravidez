@@ -91,9 +91,14 @@ export function PregnancyProvider({ children }) {
   }
 
   const pregnancy = pregnancies.find(p => p.id === activeId) ?? pregnancies[0] ?? null;
-  const myRole = pregnancy?.role ?? null;
-  const myPermissions = pregnancy?.permissions ?? null;
+  const realRole = pregnancy?.role ?? null;
   const loading = loadingOwned || loadingMembers;
+
+  // "Ver como perfil" — só a dona pode simular outro perfil (teste de permissões)
+  const [previewRole, setPreviewRole] = useState(null);
+  const previewing = realRole === "mae" && previewRole && previewRole !== "mae";
+  const myRole = previewing ? previewRole : realRole;
+  const myPermissions = previewing ? DEFAULT_PERMISSIONS[previewRole] : (pregnancy?.permissions ?? null);
 
   async function createPregnancy({ lmp, dpp, babyNickname }) {
     if (!user) return;
@@ -124,6 +129,7 @@ export function PregnancyProvider({ children }) {
   return (
     <PregnancyContext.Provider value={{
       pregnancy, pregnancies, myRole, myPermissions, loading,
+      realRole, previewRole, setPreviewRole, previewing,
       activeId, selectPregnancy,
       createPregnancy, updatePregnancy, can,
       DEFAULT_PERMISSIONS,

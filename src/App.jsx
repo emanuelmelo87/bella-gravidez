@@ -642,7 +642,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
 
 export default function App(){
   const { user, loading: authLoading } = useAuth();
-  const { pregnancy, pregnancies, myRole, loading: pregLoading, updatePregnancy, selectPregnancy } = usePregnancy();
+  const { pregnancy, pregnancies, myRole, realRole, previewRole, setPreviewRole, previewing, loading: pregLoading, updatePregnancy, selectPregnancy } = usePregnancy();
   const {
     diary, addDiaryEntry, deleteDiaryEntry,
     kicks, addKick, resetKicks,
@@ -683,7 +683,7 @@ export default function App(){
 
   // Convite na URL → tela de aceitar convite
   if (inviteId) return <InviteAccept inviteId={inviteId} onDone={() => {
-    window.history.replaceState({}, "", "/bella-gravidez/");
+    window.history.replaceState({}, "", "/");
     window.location.reload();
   }} />;
 
@@ -693,12 +693,34 @@ export default function App(){
   // Autenticada mas sem gestação → criar gestação
   if (!pregnancy) return <CreatePregnancy />;
 
-  const NAV=[{id:"home",ic:"🏠",l:"Início"},{id:"diary",ic:"📖",l:"Diário"},{id:"contractions",ic:"⏱️",l:"Contrações"},{id:"birth",ic:"🌟",l:"Parto"},{id:"more",ic:"☰",l:"Mais"}];
+  // Todas as seções do app (fonte única). primary = aparece na barra inferior do celular.
+  const SECTIONS=[
+    {id:"home",         ic:"🏠", l:"Início",        primary:true},
+    {id:"diary",        ic:"📖", l:"Diário",         primary:true},
+    {id:"contractions", ic:"⏱️", l:"Contrações",     primary:true},
+    {id:"birth",        ic:"🌟", l:"Parto",          primary:true},
+    {id:"baby",         ic:"👶", l:"Bebê"},
+    {id:"birthplan",    ic:"📋", l:"Plano de Parto"},
+    {id:"health",       ic:"🩺", l:"Saúde"},
+    {id:"tips",         ic:"💡", l:"Dicas"},
+    {id:"more",         ic:"🗂️", l:"Mais"},
+  ];
 
   return(
     <>
       <style>{CSS}</style>
-      <div className="R">
+      {previewing && (
+        <div onClick={()=>setPreviewRole(null)} style={{
+          position:"fixed",top:0,left:0,right:0,zIndex:500,cursor:"pointer",
+          background:"#1f2937",color:"#fff",fontFamily:"'DM Sans',sans-serif",
+          fontSize:12,padding:"8px 16px",display:"flex",alignItems:"center",
+          justifyContent:"center",gap:10,
+        }}>
+          👁️ Vendo como <strong style={{textTransform:"capitalize"}}>{myRole}</strong>
+          <span style={{textDecoration:"underline"}}>voltar ao normal</span>
+        </div>
+      )}
+      <div className="R" style={previewing?{paddingTop:34}:undefined}>
         <div className="HDR">
           <div className="HT">
             <span className="brand">
@@ -753,6 +775,7 @@ export default function App(){
 
         {tab==="home"&&<Home preg={pregnancy} week={week} onCfg={()=>setModal("cfg")}/>}
         {tab==="diary"&&<Diary entries={diary} addEntry={addDiaryEntry} deleteEntry={deleteDiaryEntry} week={week}/>}
+        {tab==="baby"&&<Baby week={week}/>}
         {tab==="contractions"&&<Contractions/>}
         {tab==="tips"&&<Tips/>}
         {tab==="birthplan"&&<Suspense fallback={<Loading/>}><BirthPlan/></Suspense>}
@@ -770,16 +793,61 @@ export default function App(){
         />}
 
         <div className="NAV">
-          {NAV.map(n=>(
-            <button key={n.id} className={`nb ${tab===n.id?"A":""}`} onClick={()=>setTab(n.id)}>
+          {SECTIONS.map(n=>(
+            <button key={n.id} className={`nb ${n.primary?"":"sec"} ${tab===n.id?"A":""}`} onClick={()=>setTab(n.id)}>
               <div className="ni">{n.ic}</div>
               <span className="nl">{n.l}</span>
             </button>
           ))}
+          {/* Botão Menu — só no celular, abre todas as seções */}
+          <button className={`nb menu ${["baby","birthplan","health","tips","more"].includes(tab)?"A":""}`} onClick={()=>setModal("menu")}>
+            <div className="ni">☰</div>
+            <span className="nl">Menu</span>
+          </button>
         </div>
+
+        {modal==="menu"&&(
+          <Mdl title="Menu" sub="Todas as seções do app" onClose={()=>setModal(null)}>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10}}>
+              {SECTIONS.map(n=>(
+                <button key={n.id} onClick={()=>{setTab(n.id);setModal(null);}} style={{
+                  display:"flex",flexDirection:"column",alignItems:"center",gap:6,padding:"16px 6px",
+                  borderRadius:16,cursor:"pointer",
+                  border:`1.5px solid ${tab===n.id?C.rosa:C.bege}`,
+                  background:tab===n.id?`${C.rosa}18`:`${C.bege}22`,
+                }}>
+                  <span style={{fontSize:26}}>{n.ic}</span>
+                  <span style={{fontSize:11,color:C.vinho,fontWeight:500,textAlign:"center"}}>{n.l}</span>
+                </button>
+              ))}
+            </div>
+          </Mdl>
+        )}
 
         {modal==="cfg"&&(
           <Mdl title="Configurações" onClose={()=>setModal(null)}>
+            {/* Ver como perfil — só a dona, para testar permissões */}
+            {realRole==="mae" && (
+              <div style={{marginBottom:18}}>
+                <div style={{fontSize:10,fontWeight:500,letterSpacing:1.5,textTransform:"uppercase",color:C.taupe,marginBottom:8}}>
+                  👁️ Ver como perfil (teste)
+                </div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {[{v:null,l:"Mãe"},{v:"pai",l:"Pai"},{v:"doula",l:"Doula"},{v:"obstetra",l:"Obstetra"}].map(o=>{
+                    const active=(previewRole??null)===o.v;
+                    return(
+                      <button key={o.l} onClick={()=>{setPreviewRole(o.v);setModal(null);}} style={{
+                        flex:"1 1 0",minWidth:64,padding:"8px 6px",borderRadius:10,fontSize:12,cursor:"pointer",
+                        border:`1.5px solid ${active?C.rosa:C.bege}`,
+                        background:active?`${C.rosa}22`:"transparent",
+                        color:active?C.vinho:C.taupe,fontWeight:active?600:400,
+                      }}>{o.l}</button>
+                    );
+                  })}
+                </div>
+                <div style={{fontSize:11,color:C.taupe,marginTop:6}}>Simula o acesso de cada perfil para você testar as permissões.</div>
+              </div>
+            )}
             <div style={{marginBottom:20,display:"flex",flexDirection:"column",gap:8}}>
               {[
                 {id:"members",   ic:"👥", t:"Membros e convites",    s:"Pai, doula, obstetra e permissões"},
@@ -787,7 +855,7 @@ export default function App(){
                 {id:"legal",     ic:"🔒", t:"Conta e privacidade",   s:"Termos, privacidade e excluir conta"},
                 {id:"admin",     ic:"👑", t:"Painel Admin",          s:"Acesso master — gestão da plataforma"},
               ].map(btn=>(
-                <button key={btn.id} onClick={()=>btn.id==="admin"?window.location.href="/bella-gravidez/admin":setModal(btn.id)} style={{
+                <button key={btn.id} onClick={()=>btn.id==="admin"?window.location.href="/admin":setModal(btn.id)} style={{
                   width:"100%",display:"flex",alignItems:"center",gap:12,padding:"14px 16px",
                   background:`rgba(238,209,184,.2)`,border:`1.5px solid ${C.bege}`,borderRadius:14,
                   cursor:"pointer",

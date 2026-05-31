@@ -148,7 +148,7 @@ export default function Admin() {
         padding: "10px 24px", background: C.vinho, color: C.bege,
         border: "none", borderRadius: 12, cursor: "pointer", fontSize: 13,
       }}>Sair</button>
-      <button onClick={() => window.location.href = "/bella-gravidez/"} style={{
+      <button onClick={() => window.location.href = "/"} style={{
         padding: "10px 24px", background: "transparent", color: C.taupe,
         border: `1.5px solid ${C.bege}`, borderRadius: 12, cursor: "pointer", fontSize: 13,
       }}>Ir para o app</button>
@@ -240,7 +240,7 @@ export default function Admin() {
           <div style={{ fontSize: 11, color: "rgba(238,209,184,.5)", marginTop: 2 }}>{user?.email}</div>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => window.location.href = "/bella-gravidez/"} style={{
+          <button onClick={() => window.location.href = "/"} style={{
             padding: "8px 14px", background: "rgba(238,209,184,.15)", color: C.bege,
             border: "none", borderRadius: 10, cursor: "pointer", fontSize: 12,
           }}>← App</button>

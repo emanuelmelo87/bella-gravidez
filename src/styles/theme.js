@@ -90,6 +90,7 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
 .nb.A .ni{background:${C.vinho}}
 .nl{font-size:9px;font-weight:500;color:${C.taupe};letter-spacing:.3px}
 .nb.A .nl{color:${C.vinho}}
+.nb.sec{display:none}/* no celular, seções extras só pelo Menu */
 .inp{width:100%;padding:12px 14px;border:1.5px solid ${C.bege};border-radius:12px;background:rgba(238,209,184,.15);font-family:'DM Sans',sans-serif;font-size:14px;color:${C.vinho};outline:none;transition:border-color .2s}
 .inp:focus{border-color:${C.rosa}}
 .inp::placeholder{color:${C.taupe};opacity:.7}
@@ -157,17 +158,19 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
   .NAV{order:2;position:static;transform:none;left:auto;bottom:auto;width:100%;max-width:none;
        border-top:none;border-bottom:1px solid ${C.bege};box-shadow:none;
        justify-content:center;gap:6px;padding:10px 16px}
-  .nb{flex:0 0 auto;flex-direction:row;gap:8px;padding:8px 16px;border-radius:12px}
+  .nb{flex:0 0 auto;flex-direction:row;gap:8px;padding:8px 14px;border-radius:12px}
   .nb:hover{background:${C.bege}33}
   .nb.A{background:${C.bege}44}
-  .ni{width:26px;height:26px;font-size:15px}
-  .nl{font-size:13px}
+  .nb.sec{display:flex}/* no desktop, todas as seções aparecem */
+  .nb.menu{display:none}/* e o botão Menu sai */
+  .ni{width:24px;height:24px;font-size:14px}
+  .nl{font-size:12px}
 
-  /* Conteúdo: centralizado e mais largo */
-  .SCR{order:3;padding:26px 24px 60px;max-width:680px;margin:0 auto;width:100%}
+  /* Conteúdo: TODAS as telas com a MESMA largura (padrão) */
+  .SCR{order:3;padding:26px 24px 60px;max-width:820px;margin:0 auto;width:100%}
 
-  /* Telas-painel (Início, Dicas): cards em grade */
-  .SCR.grid{max-width:920px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+  /* Telas-painel (Início, Dicas): mesma largura, cards em grade interna */
+  .SCR.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
             gap:18px;align-items:start}
   .SCR.grid>.btnp,.SCR.grid>.emp,.SCR.grid>.ndb{grid-column:1/-1}
 
@@ -182,7 +185,7 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
 /* Telas grandes: container ainda mais amplo */
 @media(min-width:1200px){
   .R{max-width:1080px}
-  .SCR.grid{max-width:1000px}
+  .SCR{max-width:900px}
 }
 `;
 }

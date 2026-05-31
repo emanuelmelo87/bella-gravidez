@@ -42,7 +42,7 @@ export default function Members({ onClose }) {
   async function handleGenerateInvite(role) {
     setGenerating(true);
     const id = await createInvite(role);
-    const base = window.location.origin + "/bella-gravidez/";
+    const base = window.location.origin + "/";
     setInviteLink(`${base}?invite=${id}`);
     setInviteRole(role);
     setGenerating(false);
