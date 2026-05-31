@@ -143,5 +143,46 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
 .kP{animation:kp 1.8s ease infinite}
 @keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 .fu{animation:fu .35s ease both}
+
+/* ─────────── Tablet / Desktop (layout largo responsivo) ─────────── */
+@media(min-width:860px){
+  /* Container vira coluna flex larga e centralizada */
+  .R{max-width:980px;display:flex;flex-direction:column;border-inline:1px solid ${C.bege};box-shadow:0 0 80px rgba(78,43,83,.08)}
+  .HDR{order:1;border-radius:0 0 32px 32px;overflow:hidden}
+  .HDR::after{display:none}
+  .WHO{padding:18px 20px 34px}
+  .wbig{font-size:72px}
+
+  /* Navegação: vira barra horizontal no topo (não fixa no rodapé) */
+  .NAV{order:2;position:static;transform:none;left:auto;bottom:auto;width:100%;max-width:none;
+       border-top:none;border-bottom:1px solid ${C.bege};box-shadow:none;
+       justify-content:center;gap:6px;padding:10px 16px}
+  .nb{flex:0 0 auto;flex-direction:row;gap:8px;padding:8px 16px;border-radius:12px}
+  .nb:hover{background:${C.bege}33}
+  .nb.A{background:${C.bege}44}
+  .ni{width:26px;height:26px;font-size:15px}
+  .nl{font-size:13px}
+
+  /* Conteúdo: centralizado e mais largo */
+  .SCR{order:3;padding:26px 24px 60px;max-width:680px;margin:0 auto;width:100%}
+
+  /* Telas-painel (Início, Dicas): cards em grade */
+  .SCR.grid{max-width:920px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+            gap:18px;align-items:start}
+  .SCR.grid>.btnp,.SCR.grid>.emp,.SCR.grid>.ndb{grid-column:1/-1}
+
+  /* Modais: viram diálogo centralizado (não bottom-sheet) */
+  .OVL{align-items:center;justify-content:center;padding:20px}
+  .MDL{border-radius:24px;max-width:460px;max-height:86vh;animation:fu .25s ease}
+  .mh{display:none}
+
+  .toast{bottom:24px}
+}
+
+/* Telas grandes: container ainda mais amplo */
+@media(min-width:1200px){
+  .R{max-width:1080px}
+  .SCR.grid{max-width:1000px}
+}
 `;
 }

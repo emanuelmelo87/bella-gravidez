@@ -220,7 +220,7 @@ function Home({preg,week,onCfg}){
   const dl=preg?dLeft(preg.dpp):null;
   const prog=week?Math.min(100,(week/40)*100):0;
   return(
-    <div className="SCR">
+    <div className="SCR grid">
       {!preg&&(
         <div className="ndb fu" onClick={onCfg}>
           <span style={{fontSize:24}}>📅</span>

@@ -264,12 +264,12 @@ export default function Admin() {
         ))}
       </div>
 
-      <div style={{ padding: 16, maxWidth: 800, margin: "0 auto" }}>
+      <div style={{ padding: 16, maxWidth: 980, margin: "0 auto" }}>
 
         {/* ── MÉTRICAS ── */}
         {tab === "metrics" && (
           <div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 12, marginBottom: 20 }}>
               {[
                 { n: metrics.pregnancies, l: "Gestações",  ic: "🤰" },
                 { n: metrics.users,       l: "Usuários",   ic: "👤" },

@@ -120,7 +120,7 @@ export default function Tips({ compact = false }) {
   }
 
   return (
-    <div className="SCR">
+    <div className="SCR grid">
       {/* Botão adicionar — só para profissionais */}
       {canEdit && (
         <button className="btnp fu" onClick={() => setShowForm(true)}>
