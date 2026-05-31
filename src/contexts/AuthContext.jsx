@@ -16,8 +16,11 @@ function isMobileOrInApp() {
 
 const AuthContext = createContext(null);
 
+const BOOTSTRAP_ADMIN_EMAIL = "emanuel.melo87@gmail.com";
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,8 +47,19 @@ export function AuthProvider({ children }) {
           await setDoc(ref, profile, { merge: true });
         }
         setUser(firebaseUser);
+
+        // Detecta admin da plataforma
+        let admin = (firebaseUser.email || "").toLowerCase() === BOOTSTRAP_ADMIN_EMAIL;
+        if (!admin) {
+          try {
+            const a = await getDoc(doc(db, "platformAdmins", firebaseUser.uid));
+            admin = a.exists() && a.data().active !== false;
+          } catch { /* ignore */ }
+        }
+        setIsAdmin(admin);
       } else {
         setUser(null);
+        setIsAdmin(false);
       }
       setLoading(false);
     });
@@ -79,7 +93,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{ user, isAdmin, loading, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

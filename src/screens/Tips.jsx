@@ -26,10 +26,11 @@ function fmtDate(ts) {
 }
 
 export default function Tips({ compact = false }) {
-  const { pregnancy, myRole, can } = usePregnancy();
-  const { user } = useAuth();
+  const { pregnancy, myRole } = usePregnancy();
+  const { user, isAdmin } = useAuth();
   const C = getColors(pregnancy?.theme?.palette);
-  const canEdit = can("tips", "edit");
+  // Só profissionais (doula/obstetra) e admin CRIAM dicas. Mãe e pai só veem.
+  const canEdit = isAdmin || myRole === "doula" || myRole === "obstetra";
 
   const [tips, setTips] = useState([]);
   const [loading, setLoading] = useState(true);

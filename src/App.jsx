@@ -11,10 +11,6 @@ import Personalization from "./screens/Personalization";
 import Tips from "./screens/Tips";
 import Legal from "./screens/Legal";
 import { buildCSS, getColors } from "./styles/theme";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "./firebase";
-
-const BOOTSTRAP_ADMIN_EMAIL = "emanuel.melo87@gmail.com";
 
 // Telas pesadas / menos usadas — carregadas sob demanda (code-splitting)
 const BirthPlan    = lazy(() => import("./screens/BirthPlan"));
@@ -654,7 +650,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
 }
 
 export default function App(){
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, logout, isAdmin, loading: authLoading } = useAuth();
   const { pregnancy, pregnancies, myRole, realRole, previewRole, setPreviewRole, previewing, loading: pregLoading, updatePregnancy, selectPregnancy } = usePregnancy();
   const {
     diary, addDiaryEntry, deleteDiaryEntry,
@@ -669,17 +665,7 @@ export default function App(){
   const [tab, setTab] = useState("home");
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const tRef = useRef(null);
-
-  // Detecta admin da plataforma (só admins veem/testam outros perfis)
-  useEffect(() => {
-    if (!user) { setIsAdmin(false); return; }
-    if (user.email === BOOTSTRAP_ADMIN_EMAIL) { setIsAdmin(true); return; }
-    getDoc(doc(db, "platformAdmins", user.uid))
-      .then(s => setIsAdmin(s.exists() && s.data().active !== false))
-      .catch(() => setIsAdmin(false));
-  }, [user]);
 
   // Detecta convite na URL (?invite=ID)
   const inviteId = new URLSearchParams(window.location.search).get("invite");
