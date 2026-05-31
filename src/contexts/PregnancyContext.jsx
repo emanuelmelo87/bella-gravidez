@@ -103,13 +103,17 @@ export function PregnancyProvider({ children }) {
   async function createPregnancy({ lmp, dpp, babyNickname }) {
     if (!user) return;
     const pregnancyId = `preg_${user.uid}`;
-    await setDoc(doc(db, "pregnancies", pregnancyId), {
+    const data = {
       ownerId: user.uid,
       lmp, dpp,
       babyNickname: babyNickname || "",
       theme: { palette: "rosa-bella" },
       createdAt: serverTimestamp(),
-    });
+    };
+    await setDoc(doc(db, "pregnancies", pregnancyId), data);
+    // Avança a tela na hora (otimista) — não espera o listener, que pode
+    // demorar/travar no Safari. O onSnapshot reconcilia depois.
+    setOwned({ id: pregnancyId, role: "mae", permissions: null, ...data, createdAt: new Date() });
   }
 
   async function updatePregnancy(data) {

@@ -21,11 +21,17 @@ export default function CreatePregnancy() {
   const [loading, setLoading] = useState(false);
 
   async function handleCreate() {
-    if (!date) return;
+    if (!date || loading) return;
     setLoading(true);
-    const lmp = dt === "lmp" ? date : calcLMP(date);
-    const dpp = dt === "dpp" ? date : calcDPP(date);
-    await createPregnancy({ lmp, dpp, babyNickname });
+    try {
+      const lmp = dt === "lmp" ? date : calcLMP(date);
+      const dpp = dt === "dpp" ? date : calcDPP(date);
+      await createPregnancy({ lmp, dpp, babyNickname });
+    } catch (e) {
+      console.error("createPregnancy:", e);
+      alert("Não foi possível criar a gestação agora. Verifique sua conexão e tente novamente.");
+      setLoading(false);
+    }
   }
 
   return (
