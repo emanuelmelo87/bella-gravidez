@@ -4,8 +4,7 @@ import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA5e551VJ5EVEn8IS9ssMLpu7jo56Hxv8o",
-  // Mesmo domínio do app (Hosting) — evita perda de sessão no login mobile
-  authDomain: "bella-gravidez.web.app",
+  authDomain: "bella-gravidez.firebaseapp.com",
   projectId: "bella-gravidez",
   storageBucket: "bella-gravidez.firebasestorage.app",
   messagingSenderId: "948546838752",
