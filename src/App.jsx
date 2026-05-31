@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { usePregnancy } from "./contexts/PregnancyContext";
 import { useData } from "./contexts/DataContext";
 import Login from "./screens/Login";
-import CreatePregnancy from "./screens/CreatePregnancy";
+import Onboarding from "./screens/Onboarding";
 import Members from "./screens/Members";
 import InviteAccept from "./screens/InviteAccept";
 import Contractions from "./screens/Contractions";
@@ -11,6 +11,10 @@ import Personalization from "./screens/Personalization";
 import Tips from "./screens/Tips";
 import Legal from "./screens/Legal";
 import { buildCSS, getColors } from "./styles/theme";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase";
+
+const BOOTSTRAP_ADMIN_EMAIL = "emanuel.melo87@gmail.com";
 
 // Telas pesadas / menos usadas — carregadas sob demanda (code-splitting)
 const BirthPlan    = lazy(() => import("./screens/BirthPlan"));
@@ -665,7 +669,17 @@ export default function App(){
   const [tab, setTab] = useState("home");
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const tRef = useRef(null);
+
+  // Detecta admin da plataforma (só admins veem/testam outros perfis)
+  useEffect(() => {
+    if (!user) { setIsAdmin(false); return; }
+    if (user.email === BOOTSTRAP_ADMIN_EMAIL) { setIsAdmin(true); return; }
+    getDoc(doc(db, "platformAdmins", user.uid))
+      .then(s => setIsAdmin(s.exists() && s.data().active !== false))
+      .catch(() => setIsAdmin(false));
+  }, [user]);
 
   // Detecta convite na URL (?invite=ID)
   const inviteId = new URLSearchParams(window.location.search).get("invite");
@@ -699,8 +713,8 @@ export default function App(){
   // Não autenticada → tela de login
   if (!user) return <Login />;
 
-  // Autenticada mas sem gestação → criar gestação
-  if (!pregnancy) return <CreatePregnancy />;
+  // Autenticada mas sem gestação → onboarding (Pai ou Mãe?)
+  if (!pregnancy) return <Onboarding />;
 
   // Todas as seções do app (fonte única). primary = aparece na barra inferior do celular.
   const SECTIONS=[
@@ -835,8 +849,8 @@ export default function App(){
 
         {modal==="cfg"&&(
           <Mdl title="Configurações" onClose={()=>setModal(null)}>
-            {/* Ver como perfil — só a dona, para testar permissões */}
-            {realRole==="mae" && (
+            {/* Ver como perfil — só admin da plataforma, para testar permissões */}
+            {isAdmin && realRole==="mae" && (
               <div style={{marginBottom:18}}>
                 <div style={{fontSize:10,fontWeight:500,letterSpacing:1.5,textTransform:"uppercase",color:C.taupe,marginBottom:8}}>
                   👁️ Ver como perfil (teste)
@@ -862,7 +876,7 @@ export default function App(){
                 {id:"members",   ic:"👥", t:"Membros e convites",    s:"Pai, doula, obstetra e permissões"},
                 {id:"personal",  ic:"🎨", t:"Personalização",        s:"Cores e apelido do bebê"},
                 {id:"legal",     ic:"🔒", t:"Conta e privacidade",   s:"Termos, privacidade e excluir conta"},
-                {id:"admin",     ic:"👑", t:"Painel Admin",          s:"Acesso master — gestão da plataforma"},
+                ...(isAdmin?[{id:"admin", ic:"👑", t:"Painel Admin", s:"Acesso master — gestão da plataforma"}]:[]),
               ].map(btn=>(
                 <button key={btn.id} onClick={()=>btn.id==="admin"?window.location.href="/admin":setModal(btn.id)} style={{
                   width:"100%",display:"flex",alignItems:"center",gap:12,padding:"14px 16px",

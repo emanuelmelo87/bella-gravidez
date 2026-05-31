@@ -11,7 +11,7 @@ const C = {
 const calcLMP = (dpp) => { const d = new Date(dpp + "T12:00:00"); d.setDate(d.getDate() - 280); return d.toISOString().split("T")[0]; };
 const calcDPP = (lmp) => { const d = new Date(lmp + "T12:00:00"); d.setDate(d.getDate() + 280); return d.toISOString().split("T")[0]; };
 
-export default function CreatePregnancy() {
+export default function CreatePregnancy({ onBack }) {
   const { createPregnancy } = usePregnancy();
   const { logout, user } = useAuth();
   const [step, setStep] = useState(1);
@@ -128,6 +128,14 @@ export default function CreatePregnancy() {
         >
           {loading ? "Criando..." : "Começar minha jornada ✨"}
         </button>
+
+        {onBack && (
+          <button onClick={onBack} style={{
+            width: "100%", padding: 12, background: "transparent", color: C.taupe,
+            border: `1.5px solid ${C.bege}`, borderRadius: 14,
+            fontFamily: "'DM Sans',sans-serif", fontSize: 13, cursor: "pointer", marginTop: 10,
+          }}>← Voltar</button>
+        )}
 
         <button
           onClick={logout}
