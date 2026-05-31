@@ -301,18 +301,14 @@ export default function Admin() {
               ))}
             </div>
             <div style={{ background: "white", borderRadius: 16, padding: 16, border: `1px solid ${C.bege}` }}>
-              <div style={{ fontFamily: SF, fontSize: 18, color: C.vinho, marginBottom: 12 }}>Gestações recentes</div>
-              {pregnancies.slice(0, 5).map(p => (
+              <div style={{ fontFamily: SF, fontSize: 18, color: C.vinho, marginBottom: 4 }}>Gestações recentes</div>
+              <div style={{ fontSize: 11, color: C.taupe, marginBottom: 10 }}>🔒 Dados das gestantes são privados — exibimos só data e tema.</div>
+              {pregnancies.slice(0, 5).map((p, i) => (
                 <div key={p.id} style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "10px 0", borderBottom: `1px solid ${C.bege}44`,
                 }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: C.vinho }}>
-                      {p.babyNickname ? `Bebê ${p.babyNickname}` : "Gestação"}
-                    </div>
-                    <div style={{ fontSize: 11, color: C.taupe }}>DPP: {p.dpp ?? "—"}</div>
-                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: C.vinho }}>Gestação #{pregnancies.length - i}</div>
                   <div style={{ fontSize: 11, color: C.taupe }}>{fmtDate(p.createdAt)}</div>
                 </div>
               ))}
@@ -347,10 +343,17 @@ export default function Admin() {
             <div style={{ fontFamily: SF, fontSize: 20, color: C.vinho, marginBottom: 4 }}>
               {pregnancies.length} gestações cadastradas
             </div>
-            <div style={{ fontSize: 12, color: C.taupe, marginBottom: 16 }}>Visão geral de todas as gestações na plataforma</div>
+            <div style={{ fontSize: 12, color: C.taupe, marginBottom: 6 }}>Visão geral da plataforma</div>
+            <div style={{
+              background: `${C.bege}33`, border: `1px solid ${C.bege}`, borderRadius: 12,
+              padding: "10px 14px", fontSize: 12, color: C.vinho, marginBottom: 14, lineHeight: 1.5,
+            }}>
+              🔒 <strong>Privacidade:</strong> os dados das gestantes (diário, saúde, fotos, nome do bebê, datas)
+              são privados e <strong>não ficam visíveis para o admin</strong>. Aqui aparecem apenas contagem e datas.
+            </div>
             {pregnancies.length === 0 ? (
               <div style={{ textAlign: "center", padding: 32, color: C.taupe }}>Nenhuma gestação ainda</div>
-            ) : pregnancies.map(p => (
+            ) : pregnancies.map((p, i) => (
               <div key={p.id} style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "12px 0",
                 borderBottom: `1px solid ${C.bege}44`,
@@ -361,15 +364,8 @@ export default function Admin() {
                   display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0,
                 }}>🤰</div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 14, fontWeight: 500, color: C.vinho }}>
-                    {p.babyNickname ? `Bebê ${p.babyNickname}` : "Sem apelido"}
-                  </div>
-                  <div style={{ fontSize: 11, color: C.taupe }}>
-                    DPP: {p.dpp ?? "—"} · Tema: {p.theme?.palette ?? "rosa-bella"}
-                  </div>
-                </div>
-                <div style={{ fontSize: 11, color: C.taupe, textAlign: "right" }}>
-                  {fmtDate(p.createdAt)}
+                  <div style={{ fontSize: 14, fontWeight: 500, color: C.vinho }}>Gestação #{pregnancies.length - i}</div>
+                  <div style={{ fontSize: 11, color: C.taupe }}>Criada em {fmtDate(p.createdAt)}</div>
                 </div>
               </div>
             ))}
