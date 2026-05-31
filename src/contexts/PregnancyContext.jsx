@@ -1,64 +1,99 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import {
-  doc, getDoc, setDoc, onSnapshot, serverTimestamp, collection, query, where, getDocs,
+  doc, getDoc, setDoc, onSnapshot, serverTimestamp, collection, query, where,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
 
 const PregnancyContext = createContext(null);
 
-const DEFAULT_PERMISSIONS = {
-  pai:      { diary:"view", kicks:"edit", contractions:"edit", health:"view",  layette:"edit", photos:"edit", songs:"edit", birthPlan:"view", birthTrack:"edit", tips:"view" },
-  doula:    { diary:"none", kicks:"view", contractions:"view", health:"view",  layette:"none", photos:"none", songs:"none", birthPlan:"edit", birthTrack:"edit", tips:"edit" },
-  obstetra: { diary:"none", kicks:"view", contractions:"view", health:"edit",  layette:"none", photos:"none", songs:"none", birthPlan:"view", birthTrack:"edit", tips:"edit" },
+export const DEFAULT_PERMISSIONS = {
+  pai:      { diary:"view", kicks:"edit", contractions:"edit", health:"view", layette:"edit", photos:"edit", songs:"edit", birthPlan:"view", birthTrack:"edit", tips:"view" },
+  doula:    { diary:"none", kicks:"view", contractions:"view", health:"view", layette:"none", photos:"none", songs:"none", birthPlan:"edit", birthTrack:"edit", tips:"edit" },
+  obstetra: { diary:"none", kicks:"view", contractions:"view", health:"edit", layette:"none", photos:"none", songs:"none", birthPlan:"view", birthTrack:"edit", tips:"edit" },
 };
 
 export function PregnancyProvider({ children }) {
   const { user } = useAuth();
-  const [pregnancy, setPregnancy] = useState(null);
-  const [myRole, setMyRole] = useState(null);
-  const [myPermissions, setMyPermissions] = useState(null);
-  const [loading, setLoading] = useState(true);
 
+  // Gestação onde sou a mãe (dona)
+  const [owned, setOwned] = useState(null);
+  // Gestações onde sou membro (pai/doula/obstetra) — pode ser várias
+  const [memberOf, setMemberOf] = useState([]);
+  const [activeId, setActiveId] = useState(null);
+  const [loadingOwned, setLoadingOwned] = useState(true);
+  const [loadingMembers, setLoadingMembers] = useState(true);
+
+  // ─── Owner: minha própria gestação ───
   useEffect(() => {
-    if (!user) { setPregnancy(null); setMyRole(null); setMyPermissions(null); setLoading(false); return; }
-
-    // Tenta carregar gestação onde sou a mãe (owner)
-    const pregnancyId = `preg_${user.uid}`;
-    const ref = doc(db, "pregnancies", pregnancyId);
-
-    const unsub = onSnapshot(ref, async (snap) => {
-      if (snap.exists()) {
-        setPregnancy({ id: snap.id, ...snap.data() });
-        setMyRole("mae");
-        setMyPermissions(null); // mãe tem acesso total
-      } else {
-        // Verifica se é membro de alguma gestação
-        const membersQ = query(
-          collection(db, "pregnancyMembers"),
-          where("userId", "==", user.uid),
-          where("status", "==", "active")
-        );
-        const membersSnap = await getDocs(membersQ);
-        if (!membersSnap.empty) {
-          const memberDoc = membersSnap.docs[0].data();
-          const pregSnap = await getDoc(doc(db, "pregnancies", memberDoc.pregnancyId));
-          if (pregSnap.exists()) {
-            setPregnancy({ id: pregSnap.id, ...pregSnap.data() });
-            setMyRole(memberDoc.role);
-            setMyPermissions(memberDoc.permissions ?? DEFAULT_PERMISSIONS[memberDoc.role]);
-          }
-        } else {
-          setPregnancy(null);
-          setMyRole(null);
-          setMyPermissions(null);
-        }
-      }
-      setLoading(false);
-    });
-
+    if (!user) { setOwned(null); setLoadingOwned(false); return; }
+    const ref = doc(db, "pregnancies", `preg_${user.uid}`);
+    const unsub = onSnapshot(ref, snap => {
+      setOwned(snap.exists() ? { id: snap.id, role: "mae", permissions: null, ...snap.data() } : null);
+      setLoadingOwned(false);
+    }, () => setLoadingOwned(false));
     return unsub;
   }, [user]);
+
+  // ─── Member: gestações que acompanho ───
+  useEffect(() => {
+    if (!user) { setMemberOf([]); setLoadingMembers(false); return; }
+    const q = query(
+      collection(db, "pregnancyMembers"),
+      where("userId", "==", user.uid),
+      where("status", "==", "active")
+    );
+    const unsub = onSnapshot(q, async (snap) => {
+      const list = await Promise.all(snap.docs.map(async (m) => {
+        const data = m.data();
+        try {
+          const pregSnap = await getDoc(doc(db, "pregnancies", data.pregnancyId));
+          if (!pregSnap.exists()) return null;
+          return {
+            id: pregSnap.id,
+            role: data.role,
+            permissions: data.permissions ?? DEFAULT_PERMISSIONS[data.role],
+            memberLabel: data.label || "",
+            ...pregSnap.data(),
+          };
+        } catch { return null; }
+      }));
+      setMemberOf(list.filter(Boolean));
+      setLoadingMembers(false);
+    }, () => setLoadingMembers(false));
+    return unsub;
+  }, [user]);
+
+  // Lista combinada (dona primeiro, depois as que acompanha)
+  const pregnancies = useMemo(() => {
+    const all = [];
+    if (owned) all.push(owned);
+    for (const p of memberOf) if (!all.find(x => x.id === p.id)) all.push(p);
+    return all;
+  }, [owned, memberOf]);
+
+  // Seleção da gestação ativa (persistida por usuário)
+  useEffect(() => {
+    if (!user || pregnancies.length === 0) return;
+    const key = `bg-active-preg-${user.uid}`;
+    const saved = localStorage.getItem(key);
+    if (saved && pregnancies.find(p => p.id === saved)) {
+      setActiveId(saved);
+    } else {
+      setActiveId(pregnancies[0].id);
+    }
+  }, [user, pregnancies]);
+
+  function selectPregnancy(id) {
+    if (!user) return;
+    setActiveId(id);
+    localStorage.setItem(`bg-active-preg-${user.uid}`, id);
+  }
+
+  const pregnancy = pregnancies.find(p => p.id === activeId) ?? pregnancies[0] ?? null;
+  const myRole = pregnancy?.role ?? null;
+  const myPermissions = pregnancy?.permissions ?? null;
+  const loading = loadingOwned || loadingMembers;
 
   async function createPregnancy({ lmp, dpp, babyNickname }) {
     if (!user) return;
@@ -88,7 +123,8 @@ export function PregnancyProvider({ children }) {
 
   return (
     <PregnancyContext.Provider value={{
-      pregnancy, myRole, myPermissions, loading,
+      pregnancy, pregnancies, myRole, myPermissions, loading,
+      activeId, selectPregnancy,
       createPregnancy, updatePregnancy, can,
       DEFAULT_PERMISSIONS,
     }}>

@@ -60,7 +60,7 @@ export function buildCSS(C) {
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font-smoothing:antialiased}
-.R{max-width:480px;margin:0 auto;min-height:100vh;background:${C.bg};position:relative}
+.R{max-width:480px;margin:0 auto;min-height:100dvh;background:${C.bg};position:relative}
 @media(min-width:481px){.R{border-left:1px solid ${C.bege};border-right:1px solid ${C.bege};box-shadow:0 0 60px rgba(78,43,83,.1)}}
 .HDR{background:${C.vinho};position:relative;overflow:hidden}
 .HDR::after{content:'';position:absolute;bottom:-1px;left:-5%;width:110%;height:36px;background:${C.bg};border-radius:50% 50% 0 0/100% 100% 0 0}
@@ -132,7 +132,7 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
 .pthumb img{width:100%;height:100%;object-fit:cover}
 .padd{aspect-ratio:1;border-radius:14px;border:1.5px dashed ${C.rosa}66;background:rgba(195,138,151,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;font-size:22px;color:${C.rosa}}
 .emp{text-align:center;padding:36px 16px}
-.WSCRN{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(160deg,${C.bege} 0%,#f5e2d0 100%)}
+.WSCRN{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(160deg,${C.bege} 0%,#f5e2d0 100%)}
 .wcrd{background:rgba(255,255,255,.8);backdrop-filter:blur(12px);border:1px solid rgba(195,138,151,.18);border-radius:24px;padding:28px 22px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(78,43,83,.1)}
 .tbns{display:flex;gap:8px;margin-bottom:16px}
 .tbtn{flex:1;padding:10px 6px;border-radius:10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}

@@ -6,17 +6,20 @@ import { AuthProvider } from './contexts/AuthContext.jsx'
 import { PregnancyProvider } from './contexts/PregnancyContext.jsx'
 import { MembersProvider } from './contexts/MembersContext.jsx'
 import { DataProvider } from './contexts/DataContext.jsx'
+import ErrorBoundary from './components/ErrorBoundary.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <AuthProvider>
-      <PregnancyProvider>
-        <MembersProvider>
-          <DataProvider>
-            <App />
-          </DataProvider>
-        </MembersProvider>
-      </PregnancyProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <PregnancyProvider>
+          <MembersProvider>
+            <DataProvider>
+              <App />
+            </DataProvider>
+          </MembersProvider>
+        </PregnancyProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   </StrictMode>,
 )

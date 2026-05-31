@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────── Helpers ───────────
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Email "dono" da plataforma — bootstrap (sempre admin, resolve ovo-e-galinha)
+    function isBootstrapAdmin() {
+      return signedIn() && request.auth.token.email == 'emanuel.melo87@gmail.com';
+    }
+
+    // É admin da plataforma? (bootstrap OU documento ativo em platformAdmins/{uid})
+    function isPlatformAdmin() {
+      return isBootstrapAdmin() || (
+        signedIn()
+        && exists(/databases/$(database)/documents/platformAdmins/$(uid()))
+        && get(/databases/$(database)/documents/platformAdmins/$(uid())).data.active != false
+      );
+    }
+
+    // É dona (owner) da gestação?
+    function isOwner(pregnancyId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/pregnancies/$(pregnancyId)).data.ownerId == uid();
+    }
+
+    // É membro ativo da gestação? (doc id = pregnancyId_uid)
+    function isMember(pregnancyId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/pregnancyMembers/$(pregnancyId + '_' + uid()))
+        && get(/databases/$(database)/documents/pregnancyMembers/$(pregnancyId + '_' + uid())).data.status == 'active';
+    }
+
+    // Tem acesso à gestação (dona OU membro ativo)
+    function hasAccess(pregnancyId) {
+      return isOwner(pregnancyId) || isMember(pregnancyId);
+    }
+
+    // ─────────── Usuários ───────────
+    match /users/{userId} {
+      allow read: if signedIn();          // perfis públicos básicos (nome/foto p/ membros)
+      allow write: if uid() == userId;    // só edita o próprio
+    }
+
+    // ─────────── Gestações ───────────
+    match /pregnancies/{pregnancyId} {
+      allow create: if signedIn() && request.resource.data.ownerId == uid();
+      allow read:   if hasAccess(pregnancyId);
+      allow update: if isOwner(pregnancyId);
+      allow delete: if isOwner(pregnancyId);
+
+      // Subcoleções (diary, kicks, appointments, contractions, tips, etc.)
+      // Qualquer pessoa com acesso à gestação pode ler/escrever.
+      // (As permissões finas por seção são aplicadas na interface.)
+      match /{sub}/{docId} {
+        allow read, write: if hasAccess(pregnancyId);
+      }
+    }
+
+    // ─────────── Membros ───────────
+    match /pregnancyMembers/{memberId} {
+      // Lê: dona da gestação ou o próprio membro
+      allow read: if signedIn() && (
+        resource.data.userId == uid() ||
+        isOwner(resource.data.pregnancyId)
+      );
+      // Cria: só a si mesmo, ao aceitar convite (userId == uid)
+      allow create: if signedIn() && request.resource.data.userId == uid();
+      // Atualiza: a dona da gestação (permissões/status) ou o próprio (sair)
+      allow update: if signedIn() && (
+        isOwner(resource.data.pregnancyId) ||
+        resource.data.userId == uid()
+      );
+      // Remove: dona ou o próprio
+      allow delete: if signedIn() && (
+        isOwner(resource.data.pregnancyId) ||
+        resource.data.userId == uid()
+      );
+    }
+
+    // ─────────── Convites ───────────
+    match /pregnancyInvites/{inviteId} {
+      // Leitura necessária antes de virar membro (precisa ver o convite p/ aceitar)
+      allow read: if signedIn();
+      // Só a dona da gestação cria convites
+      allow create: if signedIn() && isOwner(request.resource.data.pregnancyId);
+      // Marcar como usado: quem está aceitando
+      allow update: if signedIn() && request.resource.data.usedBy == uid();
+      allow delete: if signedIn() && isOwner(resource.data.pregnancyId);
+    }
+
+    // ─────────── Admins da plataforma ───────────
+    match /platformAdmins/{adminId} {
+      allow read:  if signedIn();              // app precisa checar se é admin
+      allow write: if isPlatformAdmin();       // só admin gerencia admins
+    }
+
+    // ─────────── Marcos do parto (config global) ───────────
+    match /platformMilestones/{id} {
+      allow read:  if signedIn();              // todos leem os marcos
+      allow write: if isPlatformAdmin();       // só admin edita
+    }
+
+    // ─────────── Métricas: admin lê coleções globais ───────────
+    // (a leitura de /pregnancies e /users para métricas no painel
+    //  já é coberta acima para o owner; para o admin ver TUDO,
+    //  liberamos leitura global apenas para admins)
+    match /pregnancies/{pregnancyId} {
+      allow read: if isPlatformAdmin();
+    }
+    match /users/{userId} {
+      allow read: if isPlatformAdmin();
+    }
+    match /pregnancyMembers/{memberId} {
+      allow read: if isPlatformAdmin();
+    }
+  }
+}

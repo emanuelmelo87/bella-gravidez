@@ -48,30 +48,20 @@ export default function Admin() {
   const [editMs, setEditMs] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Verifica se é admin
+  // Email "dono" da plataforma (bootstrap) — precisa bater com firestore.rules
+  const BOOTSTRAP_EMAIL = "emanuel.melo87@gmail.com";
+
+  // Verifica se é admin (sem auto-cadastro — segurança)
   useEffect(() => {
     if (!user) return;
     async function check() {
       try {
-        // Busca o documento do admin pelo UID
-        const ref = doc(db, "platform", "admins", "list", user.uid);
-        const snap = await getDoc(ref);
+        // Bootstrap: o dono é sempre admin
+        if (user.email === BOOTSTRAP_EMAIL) { setIsAdmin(true); return; }
 
-        if (snap.exists() && snap.data().active !== false) {
-          setIsAdmin(true);
-          return;
-        }
-
-        // Não existe — cria automaticamente (qualquer usuário logado vira admin na primeira vez)
-        // Depois que entrar, o admin pode remover outros e manter só os que quiser
-        await setDoc(ref, {
-          email: user.email,
-          uid: user.uid,
-          name: user.displayName,
-          addedAt: serverTimestamp(),
-          active: true,
-        });
-        setIsAdmin(true);
+        // Demais: precisam de documento ativo em platformAdmins/{uid}
+        const snap = await getDoc(doc(db, "platformAdmins", user.uid));
+        setIsAdmin(snap.exists() && snap.data().active !== false);
       } catch (e) {
         console.error("Admin check:", e.code, e.message);
         setIsAdmin(false);
@@ -86,8 +76,9 @@ export default function Admin() {
 
     // Admins
     const unsubAdmins = onSnapshot(
-      collection(db, "platform", "admins", "list"),
-      snap => setAdmins(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      collection(db, "platformAdmins"),
+      snap => setAdmins(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      err => console.error("admins error:", err)
     );
 
     // Milestones — coleção própria na raiz para simplificar
@@ -135,7 +126,7 @@ export default function Admin() {
 
   // Loading
   if (isAdmin === null) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: C.bg }}>
+    <div style={{ minHeight: "100dvh", display: "flex", alignItems: "center", justifyContent: "center", background: C.bg }}>
       <span style={{ fontFamily: SF, fontSize: 24, color: C.vinho }}>Verificando acesso...</span>
     </div>
   );
@@ -143,7 +134,7 @@ export default function Admin() {
   // Sem acesso
   if (!isAdmin) return (
     <div style={{
-      minHeight: "100vh", display: "flex", flexDirection: "column",
+      minHeight: "100dvh", display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", background: C.bg,
       fontFamily: "'DM Sans',sans-serif", gap: 16, padding: 20,
     }}>
@@ -165,24 +156,39 @@ export default function Admin() {
   );
 
   async function addAdmin() {
-    if (!newAdminEmail.trim()) return;
+    const email = newAdminEmail.trim().toLowerCase();
+    if (!email) return;
     setSaving(true);
-    // Cria entrada com email — uid será preenchido quando a pessoa logar pela primeira vez
-    const id = newAdminEmail.trim().replace(/[^a-zA-Z0-9]/g, "_");
-    await setDoc(doc(db, "platform", "admins", "list", id), {
-      email: newAdminEmail.trim(),
-      addedBy: user.uid,
-      addedByEmail: user.email,
-      addedAt: serverTimestamp(),
-      active: true,
-    });
-    setNewAdminEmail("");
+    try {
+      // Procura o usuário pelo email (ele precisa ter logado ao menos uma vez)
+      const q = query(collection(db, "users"), where("email", "==", email));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        alert("Esta pessoa precisa fazer login no app pelo menos uma vez antes de ser adicionada como admin.");
+        setSaving(false);
+        return;
+      }
+      const targetUser = snap.docs[0];
+      await setDoc(doc(db, "platformAdmins", targetUser.id), {
+        email,
+        uid: targetUser.id,
+        name: targetUser.data().name ?? "",
+        addedBy: user.uid,
+        addedByEmail: user.email,
+        addedAt: serverTimestamp(),
+        active: true,
+      });
+      setNewAdminEmail("");
+    } catch (e) {
+      console.error("addAdmin:", e.code, e.message);
+      alert("Erro ao adicionar admin: " + e.message);
+    }
     setSaving(false);
   }
 
   async function removeAdmin(id) {
     if (id === user.uid) return; // não pode remover a si mesmo
-    await deleteDoc(doc(db, "platform", "admins", "list", id));
+    await deleteDoc(doc(db, "platformAdmins", id));
   }
 
   async function addMilestone() {
@@ -224,7 +230,7 @@ export default function Admin() {
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, fontFamily: "'DM Sans',sans-serif" }}>
+    <div style={{ minHeight: "100dvh", background: C.bg, fontFamily: "'DM Sans',sans-serif" }}>
       {/* Header */}
       <div style={{ background: C.vinho, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>

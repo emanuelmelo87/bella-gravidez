@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import {
   collection, doc, onSnapshot, addDoc, setDoc, updateDoc,
-  deleteDoc, query, orderBy, serverTimestamp, writeBatch, getDocs,
+  deleteDoc, query, orderBy, serverTimestamp, writeBatch, getDocs, increment,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { usePregnancy } from "./PregnancyContext";
@@ -188,9 +188,9 @@ export function DataProvider({ children }) {
 
   // ─── CRUD Kicks ──────────────────────────────────────────────────────
   async function addKick(date) {
-    const curr = kicks[date] ?? 0;
+    // increment() é atômico no servidor — não perde toques simultâneos
     await setDoc(doc(db, "pregnancies", pid, "kicks", "daily"),
-      { [date]: curr + 1 }, { merge: true });
+      { [date]: increment(1) }, { merge: true });
   }
   async function resetKicks(date) {
     await setDoc(doc(db, "pregnancies", pid, "kicks", "daily"),
@@ -257,6 +257,34 @@ export function DataProvider({ children }) {
     await deleteDoc(doc(db, "pregnancies", pid, "photos", id));
   }
 
+  // ─── Exclusão total dos dados da gestação (LGPD) ─────────────────────
+  async function deleteAllPregnancyData(pregnancyId) {
+    const targetId = pregnancyId || pid;
+    if (!targetId) return;
+    const subs = [
+      "diary", "kicks", "appointments", "medications", "symptoms",
+      "layette", "songs", "photos", "contractions", "tips",
+      "birthPlan", "birthEvents", "birthSession",
+    ];
+    for (const sub of subs) {
+      try {
+        const snap = await getDocs(collection(db, "pregnancies", targetId, sub));
+        // apaga em lotes de 400
+        let batch = writeBatch(db);
+        let n = 0;
+        for (const d of snap.docs) {
+          batch.delete(d.ref);
+          if (++n >= 400) { await batch.commit(); batch = writeBatch(db); n = 0; }
+        }
+        if (n > 0) await batch.commit();
+      } catch (e) { console.error("delete sub", sub, e); }
+    }
+    // apaga a gestação em si
+    try { await deleteDoc(doc(db, "pregnancies", targetId)); } catch (e) { console.error("delete preg", e); }
+    // limpa flag de migração local
+    localStorage.removeItem("bg-migrated-" + targetId);
+  }
+
   return (
     <DataContext.Provider value={{
       ready,
@@ -268,6 +296,7 @@ export function DataProvider({ children }) {
       layette, addLayetteItem, toggleLayetteItem, deleteLayetteItem,
       songs, addSong, deleteSong,
       photos, addPhoto, deletePhoto,
+      deleteAllPregnancyData,
     }}>
       {children}
     </DataContext.Provider>

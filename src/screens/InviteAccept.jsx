@@ -60,7 +60,7 @@ export default function InviteAccept({ inviteId, onDone }) {
 
   return (
     <div style={{
-      minHeight: "100vh", display: "flex", flexDirection: "column",
+      minHeight: "100dvh", display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", padding: "40px 20px",
       background: `linear-gradient(160deg, ${C.bege} 0%, #f5e2d0 100%)`,
       fontFamily: "'DM Sans',sans-serif",

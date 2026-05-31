@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { usePregnancy } from "./contexts/PregnancyContext";
 import { useData } from "./contexts/DataContext";
@@ -9,10 +9,21 @@ import InviteAccept from "./screens/InviteAccept";
 import Contractions from "./screens/Contractions";
 import Personalization from "./screens/Personalization";
 import Tips from "./screens/Tips";
-import BirthPlan from "./screens/BirthPlan";
-import BirthTracker from "./screens/BirthTracker";
-import Admin from "./screens/Admin";
+import Legal from "./screens/Legal";
 import { buildCSS, getColors } from "./styles/theme";
+
+// Telas pesadas / menos usadas — carregadas sob demanda (code-splitting)
+const BirthPlan    = lazy(() => import("./screens/BirthPlan"));
+const BirthTracker = lazy(() => import("./screens/BirthTracker"));
+const Admin        = lazy(() => import("./screens/Admin"));
+
+function Loading() {
+  return (
+    <div style={{ padding: 40, textAlign: "center", color: "#ab9d95", fontFamily: "'DM Sans',sans-serif" }}>
+      Carregando…
+    </div>
+  );
+}
 
 const SF = "'Cormorant Garamond',Georgia,serif";
 
@@ -250,6 +261,8 @@ function Home({preg,week,onCfg}){
 }
 
 function Diary({entries,addEntry,deleteEntry,week}){
+  const{can}=usePregnancy();
+  const canEdit=can("diary","edit");
   const[open,setOpen]=useState(false);
   const[mood,setMood]=useState(null);
   const[text,setText]=useState("");
@@ -261,7 +274,7 @@ function Diary({entries,addEntry,deleteEntry,week}){
   const Btn=({onClick})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16,padding:4}} onClick={onClick}>🗑️</button>;
   return(
     <div className="SCR">
-      <button className="btnp fu" onClick={()=>setOpen(true)} style={{marginTop:4}}>✍️ Nova anotação do dia</button>
+      {canEdit&&<button className="btnp fu" onClick={()=>setOpen(true)} style={{marginTop:4}}>✍️ Nova anotação do dia</button>}
       {entries.length===0?(
         <div className="emp">
           <div style={{fontSize:40,marginBottom:10}}>📖</div>
@@ -279,7 +292,7 @@ function Diary({entries,addEntry,deleteEntry,week}){
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   {e.mood&&<span style={{fontSize:22}}>{e.mood}</span>}
-                  <Btn onClick={()=>deleteEntry(e.id)}/>
+                  {canEdit&&<Btn onClick={()=>deleteEntry(e.id)}/>}
                 </div>
               </div>
               {e.text&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{e.text}</div>}
@@ -386,6 +399,8 @@ function Baby({week}){
 }
 
 function Health({appointments,addAppointment,deleteAppointment,medications,addMedication,deleteMedication,symptoms,addSymptom,deleteSymptom}){
+  const{can}=usePregnancy();
+  const canEdit=can("health","edit");
   const[sub,setSub]=useState("c");
   const[modal,setModal]=useState(null);
   const[cDt,setCDt]=useState(tod());const[cDc,setCDc]=useState("");const[cTp,setCTp]=useState(CTYPES[0]);const[cNt,setCNt]=useState("");
@@ -404,40 +419,40 @@ function Health({appointments,addAppointment,deleteAppointment,medications,addMe
         ))}
       </div>
       {sub==="c"&&<>
-        <button className="btnp fu" onClick={()=>setModal("c")}>+ Adicionar consulta</button>
+        {canEdit&&<button className="btnp fu" onClick={()=>setModal("c")}>+ Adicionar consulta</button>}
         <div className="card fu" style={{marginTop:12}}>
           {appointments.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>🩺</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhuma consulta</div><div style={{fontSize:13,color:C.taupe}}>Registre suas consultas de pré-natal</div></div>:
           appointments.map(c=>(
             <div key={c.id} className="LI">
               <div className="liic">🩺</div>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.vinho}}>{c.type} — {c.doctor}</div><div style={{fontSize:12,color:C.taupe,marginTop:2}}>{fmtD(c.date)}{c.notes?` · ${c.notes}`:""}</div></div>
-              <D fn={()=>deleteAppointment(c.id)}/>
+              {canEdit&&<D fn={()=>deleteAppointment(c.id)}/>}
             </div>
           ))}
         </div>
       </>}
       {sub==="m"&&<>
-        <button className="btnp fu" onClick={()=>setModal("m")}>+ Adicionar medicamento</button>
+        {canEdit&&<button className="btnp fu" onClick={()=>setModal("m")}>+ Adicionar medicamento</button>}
         <div className="card fu" style={{marginTop:12}}>
           {medications.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>💊</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhum medicamento</div><div style={{fontSize:13,color:C.taupe}}>Vitaminas, suplementos e remédios</div></div>:
           medications.map(m=>(
             <div key={m.id} className="LI">
               <div className="liic">💊</div>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.vinho}}>{m.name}</div><div style={{fontSize:12,color:C.taupe,marginTop:2}}>{[m.dose,m.time].filter(Boolean).join(" · ")}</div></div>
-              <D fn={()=>deleteMedication(m.id)}/>
+              {canEdit&&<D fn={()=>deleteMedication(m.id)}/>}
             </div>
           ))}
         </div>
       </>}
       {sub==="s"&&<>
-        <button className="btnp fu" onClick={()=>setModal("s")}>+ Registrar sintomas</button>
+        {canEdit&&<button className="btnp fu" onClick={()=>setModal("s")}>+ Registrar sintomas</button>}
         <div style={{display:"flex",flexDirection:"column",gap:10,marginTop:12}}>
           {symptoms.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhum registro</div><div style={{fontSize:13,color:C.taupe}}>Acompanhe seus sintomas diários</div></div>:
           symptoms.map(s=>(
             <div key={s.id} className="dcard fu">
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                 <span style={{fontSize:12,color:C.taupe}}>{fmtD(s.date)} — {shortD(s.date)}</span>
-                <D fn={()=>deleteSymptom(s.id)}/>
+                {canEdit&&<D fn={()=>deleteSymptom(s.id)}/>}
               </div>
               <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:s.notes?8:0}}>
                 {s.items.map(i=><span key={i} style={{background:`${C.rosa}22`,color:C.vinho,border:`1px solid ${C.rosa}44`,borderRadius:20,fontSize:11,padding:"3px 10px"}}>{i}</span>)}
@@ -472,6 +487,10 @@ function Health({appointments,addAppointment,deleteAppointment,medications,addMe
 }
 
 function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,addSong,deleteSong,photos,addPhoto,deletePhoto,week}){
+  const{can}=usePregnancy();
+  const canLayette=can("layette","edit");
+  const canSongs=can("songs","edit");
+  const canPhotos=can("photos","edit");
   const[sub,setSub]=useState("e");
   const[modal,setModal]=useState(null);
   const[sT,setST]=useState("");const[sA,setSA]=useState("");
@@ -498,18 +517,18 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
           </div>
           <div className="pbar"><div className="pfill" style={{width:layette.length?`${(done/layette.length)*100}%`:"0%"}}/></div>
         </div>
-        <button className="btnp fu" onClick={()=>setModal("e")} style={{marginBottom:12}}>+ Adicionar item</button>
+        {canLayette&&<button className="btnp fu" onClick={()=>setModal("e")} style={{marginBottom:12}}>+ Adicionar item</button>}
         <div className="card fu">
           {cats.map(cat=>(
             <div key={cat}>
               <div style={{fontSize:12,fontWeight:600,color:C.vinho,margin:"14px 0 6px",paddingBottom:6,borderBottom:`1px solid ${C.bege}`}}>{cat}</div>
               {layette.filter(i=>i.cat===cat).map(item=>(
                 <div key={item.id} className="cki">
-                  <div className={`cb ${item.done?"C":""}`} onClick={()=>toggleLayetteItem(item.id,!item.done)}>
+                  <div className={`cb ${item.done?"C":""}`} onClick={()=>canLayette&&toggleLayetteItem(item.id,!item.done)} style={{cursor:canLayette?"pointer":"default"}}>
                     {item.done&&<span style={{fontSize:12,color:"white"}}>✓</span>}
                   </div>
                   <span style={{fontSize:13,color:item.done?C.taupe:C.vinho,textDecoration:item.done?"line-through":"none",flex:1}}>{item.n}</span>
-                  <D fn={()=>deleteLayetteItem(item.id)}/>
+                  {canLayette&&<D fn={()=>deleteLayetteItem(item.id)}/>}
                 </div>
               ))}
             </div>
@@ -517,7 +536,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
         </div>
       </>}
       {sub==="s"&&<>
-        <button className="btnp fu" onClick={()=>setModal("s")}>+ Adicionar música</button>
+        {canSongs&&<button className="btnp fu" onClick={()=>setModal("s")}>+ Adicionar música</button>}
         <div className="card fu" style={{marginTop:12}}>
           {songs.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>🎵</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Playlist vazia</div><div style={{fontSize:13,color:C.taupe}}>Crie uma playlist especial para o bebê</div></div>:
           songs.map(s=>(
@@ -527,7 +546,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
                 <div style={{fontSize:13,fontWeight:500,color:C.vinho}}>{s.title}</div>
                 {s.artist&&<div style={{fontSize:11,color:C.taupe}}>{s.artist}</div>}
               </div>
-              <button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16}} onClick={()=>deleteSong(s.id)}>🗑️</button>
+              {canSongs&&<button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16}} onClick={()=>deleteSong(s.id)}>🗑️</button>}
             </div>
           ))}
         </div>
@@ -537,15 +556,15 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
           <div className="ctit"><span>📸</span>Fotos da Barriga</div>
           <p style={{fontSize:12,color:C.taupe,marginBottom:14,lineHeight:1.5}}>Cole o link de uma foto (Google Fotos, Drive) para guardar na timeline da gestação.</p>
           <div className="pgrid">
-            <div className="padd" onClick={()=>setModal("p")}><span>+</span><span style={{fontSize:10,color:C.taupe}}>Nova foto</span></div>
+            {canPhotos&&<div className="padd" onClick={()=>setModal("p")}><span>+</span><span style={{fontSize:10,color:C.taupe}}>Nova foto</span></div>}
             {photos.map(p=>(
-              <div key={p.id} className="pthumb" onClick={()=>deletePhoto(p.id)}>
+              <div key={p.id} className="pthumb" onClick={()=>canPhotos&&deletePhoto(p.id)} style={{cursor:canPhotos?"pointer":"default"}}>
                 <img src={p.url} alt={`Sem ${p.week}`} onError={e=>e.target.style.display="none"}/>
                 <span style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontSize:9,color:"white",textShadow:"0 1px 4px rgba(0,0,0,.5)"}}>Sem. {p.week}</span>
               </div>
             ))}
           </div>
-          {photos.length>0&&<p style={{fontSize:11,color:C.taupe,textAlign:"center",marginTop:8}}>Toque em uma foto para remover</p>}
+          {canPhotos&&photos.length>0&&<p style={{fontSize:11,color:C.taupe,textAlign:"center",marginTop:8}}>Toque em uma foto para remover</p>}
         </div>
       )}
       {modal==="e"&&<Mdl title="Novo item" sub="Adicione ao enxoval" onClose={()=>setModal(null)}>
@@ -569,7 +588,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
 
 export default function App(){
   const { user, loading: authLoading } = useAuth();
-  const { pregnancy, loading: pregLoading, updatePregnancy } = usePregnancy();
+  const { pregnancy, pregnancies, myRole, loading: pregLoading, updatePregnancy, selectPregnancy } = usePregnancy();
   const {
     diary, addDiaryEntry, deleteDiaryEntry,
     kicks, addKick, resetKicks,
@@ -600,13 +619,13 @@ export default function App(){
 
   // Loading inicial
   if (authLoading || pregLoading) return (
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f7ece0"}}>
+    <div style={{minHeight:"100dvh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f7ece0"}}>
       <span style={{fontFamily:SF,fontSize:32,color:"#4e2b53"}}>Bella <em style={{fontStyle:"italic",color:"#c38a97"}}>Gravidez</em></span>
     </div>
   );
 
   // Rota admin
-  if (window.location.pathname.includes("/admin")) return <Admin />;
+  if (window.location.pathname.includes("/admin")) return <Suspense fallback={<Loading/>}><Admin /></Suspense>;
 
   // Convite na URL → tela de aceitar convite
   if (inviteId) return <InviteAccept inviteId={inviteId} onDone={() => {
@@ -636,6 +655,35 @@ export default function App(){
             </span>
             <button className="hcfg" onClick={()=>setModal("cfg")}>⚙️</button>
           </div>
+
+          {/* Seletor de gestação (pai/doula/obstetra com mais de uma) + selo do perfil */}
+          {(pregnancies.length>1 || myRole!=="mae") && (
+            <div style={{padding:"4px 20px 0",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              {myRole!=="mae" && (
+                <span style={{fontSize:10,letterSpacing:1,textTransform:"uppercase",color:"rgba(238,209,184,.7)",background:"rgba(238,209,184,.12)",padding:"3px 10px",borderRadius:20}}>
+                  {myRole==="pai"?"👨‍👩‍👧 Pai":myRole==="doula"?"🤱 Doula":"👩‍⚕️ Obstetra"}
+                </span>
+              )}
+              {pregnancies.length>1 && (
+                <select
+                  value={pregnancy.id}
+                  onChange={e=>selectPregnancy(e.target.value)}
+                  style={{
+                    flex:1,minWidth:140,background:"rgba(238,209,184,.12)",color:"#eed1b8",
+                    border:"1px solid rgba(238,209,184,.25)",borderRadius:10,padding:"6px 10px",
+                    fontFamily:"'DM Sans',sans-serif",fontSize:12,outline:"none",
+                  }}
+                >
+                  {pregnancies.map(p=>(
+                    <option key={p.id} value={p.id} style={{color:"#4e2b53"}}>
+                      {p.babyNickname ? `Bebê ${p.babyNickname}` : "Gestação"}{p.role!=="mae"?` · ${p.role}`:""}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
+
           <div className="WHO">
             <div className="wey">semana atual</div>
             <span className="wbig">{week??"—"}</span>
@@ -653,8 +701,8 @@ export default function App(){
         {tab==="diary"&&<Diary entries={diary} addEntry={addDiaryEntry} deleteEntry={deleteDiaryEntry} week={week}/>}
         {tab==="contractions"&&<Contractions/>}
         {tab==="tips"&&<Tips/>}
-        {tab==="birthplan"&&<BirthPlan/>}
-        {tab==="birth"&&<BirthTracker/>}
+        {tab==="birthplan"&&<Suspense fallback={<Loading/>}><BirthPlan/></Suspense>}
+        {tab==="birth"&&<Suspense fallback={<Loading/>}><BirthTracker/></Suspense>}
         {tab==="health"&&<Health
           appointments={appointments} addAppointment={addAppointment} deleteAppointment={deleteAppointment}
           medications={medications} addMedication={addMedication} deleteMedication={deleteMedication}
@@ -682,6 +730,7 @@ export default function App(){
               {[
                 {id:"members",   ic:"👥", t:"Membros e convites",    s:"Pai, doula, obstetra e permissões"},
                 {id:"personal",  ic:"🎨", t:"Personalização",        s:"Cores e apelido do bebê"},
+                {id:"legal",     ic:"🔒", t:"Conta e privacidade",   s:"Termos, privacidade e excluir conta"},
                 {id:"admin",     ic:"👑", t:"Painel Admin",          s:"Acesso master — gestão da plataforma"},
               ].map(btn=>(
                 <button key={btn.id} onClick={()=>btn.id==="admin"?window.location.href="/bella-gravidez/admin":setModal(btn.id)} style={{
@@ -715,6 +764,12 @@ export default function App(){
         {modal==="personal"&&(
           <Mdl title="Personalização" sub="Deixe o app com a sua cara 🎨" onClose={()=>setModal(null)}>
             <Personalization onClose={()=>setModal(null)}/>
+          </Mdl>
+        )}
+
+        {modal==="legal"&&(
+          <Mdl title="Conta e privacidade" onClose={()=>setModal(null)}>
+            <Legal onClose={()=>setModal(null)}/>
           </Mdl>
         )}
 

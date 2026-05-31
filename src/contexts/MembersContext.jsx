@@ -6,7 +6,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
-import { usePregnancy } from "./PregnancyContext";
+import { usePregnancy, DEFAULT_PERMISSIONS } from "./PregnancyContext";
 
 const MembersContext = createContext(null);
 
@@ -14,12 +14,6 @@ const ROLE_LABELS = {
   pai:      { label: "Pai / Parceiro", icon: "👨‍👩‍👧" },
   doula:    { label: "Doula",          icon: "🤱" },
   obstetra: { label: "Obstetra",       icon: "👩‍⚕️" },
-};
-
-const DEFAULT_PERMISSIONS = {
-  pai:      { diary:"view",  kicks:"edit", contractions:"edit", health:"view",  layette:"edit", photos:"edit", songs:"edit",  birthPlan:"view", birthTrack:"edit", tips:"view" },
-  doula:    { diary:"none",  kicks:"view", contractions:"view", health:"view",  layette:"none", photos:"none", songs:"none",  birthPlan:"edit", birthTrack:"edit", tips:"edit" },
-  obstetra: { diary:"none",  kicks:"view", contractions:"view", health:"edit",  layette:"none", photos:"none", songs:"none",  birthPlan:"view", birthTrack:"edit", tips:"edit" },
 };
 
 export function MembersProvider({ children }) {
