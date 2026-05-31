@@ -170,11 +170,6 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
   /* Conteúdo: TODAS as telas com a MESMA largura (padrão) */
   .SCR{order:3;padding:26px 24px 60px;max-width:820px;margin:0 auto;width:100%}
 
-  /* Telas-painel (Início, Dicas): mesma largura, cards em grade interna */
-  .SCR.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-            gap:18px;align-items:start}
-  .SCR.grid>.btnp,.SCR.grid>.emp,.SCR.grid>.ndb{grid-column:1/-1}
-
   /* Modais: viram diálogo centralizado (não bottom-sheet) */
   .OVL{align-items:center;justify-content:center;padding:20px}
   .MDL{border-radius:24px;max-width:460px;max-height:86vh;animation:fu .25s ease}
@@ -184,6 +179,14 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
 }
 
 /* Telas grandes: container ainda mais amplo */
+/* Grade em colunas (Início, Dicas) só no desktop de verdade — em
+   celular/tablet tudo fica em coluna única, com a MESMA largura */
+@media(min-width:1024px){
+  .SCR.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
+            gap:18px;align-items:start}
+  .SCR.grid>.btnp,.SCR.grid>.emp,.SCR.grid>.ndb{grid-column:1/-1}
+}
+
 @media(min-width:1200px){
   .R{max-width:1080px}
   .SCR{max-width:900px}

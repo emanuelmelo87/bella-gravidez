@@ -19,6 +19,13 @@ function fmt(secs) {
   const s = (secs % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
 }
+// Horas:minutos:segundos (para intervalos, que podem ser longos)
+function fmtHMS(secs) {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60).toString().padStart(2, "0");
+  const s = (secs % 60).toString().padStart(2, "0");
+  return `${h}:${m}:${s}`;
+}
 function fmtTime(ts) {
   if (!ts) return "—";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -121,14 +128,14 @@ export default function Contractions() {
               <div style={{ fontSize: 9, color: C.taupe, textTransform: "uppercase", letterSpacing: 1, marginTop: 3 }}>Duração méd.</div>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 26, color: C.vinho, lineHeight: 1 }}>{stats.avgInterval ? fmt(stats.avgInterval) : "—"}</div>
+              <div style={{ fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 26, color: C.vinho, lineHeight: 1 }}>{stats.avgInterval ? fmtHMS(stats.avgInterval) : "—"}</div>
               <div style={{ fontSize: 9, color: C.taupe, textTransform: "uppercase", letterSpacing: 1, marginTop: 3 }}>Intervalo méd.</div>
             </div>
           </div>
         </div>
         {stats.avgInterval && stats.avgInterval <= 300 && stats.count >= 3 && (
           <div style={{ marginTop: 12, background: "#fef3c7", border: "1px solid #f59e0b", borderRadius: 12, padding: "9px 12px", fontSize: 12.5, color: "#92400e" }}>
-            ⚠️ Contrações a cada <strong>{fmt(stats.avgInterval)}</strong> — considere contatar sua equipe.
+            ⚠️ Contrações a cada <strong>{fmtHMS(stats.avgInterval)}</strong> — considere contatar sua equipe.
           </div>
         )}
       </div>
@@ -192,7 +199,7 @@ export default function Contractions() {
                   {interval != null && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 0 8px 24px" }}>
                       <span style={{ color: C.rosa, fontSize: 15 }}>💗</span>
-                      <span style={{ fontSize: 12, color: C.taupe }}>Intervalo: <strong style={{ color: C.vinho }}>{fmt(interval)}</strong></span>
+                      <span style={{ fontSize: 12, color: C.taupe }}>Intervalo: <strong style={{ color: C.vinho }}>{fmtHMS(interval)}</strong></span>
                     </div>
                   )}
                 </div>
