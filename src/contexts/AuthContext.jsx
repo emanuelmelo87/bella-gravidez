@@ -50,19 +50,23 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function loginWithGoogle() {
-    if (isMobileOrInApp()) {
-      // No celular, redirect é mais confiável que popup
-      await signInWithRedirect(auth, googleProvider);
-    } else {
-      try {
-        await signInWithPopup(auth, googleProvider);
-      } catch (e) {
-        // Popup bloqueado → cai para redirect
-        if (e.code === "auth/popup-blocked" || e.code === "auth/cancelled-popup-request") {
-          await signInWithRedirect(auth, googleProvider);
-        } else {
-          throw e;
-        }
+    // Popup primeiro (funciona no desktop e no Safari/iPad com clique do usuário).
+    // Só cai para redirect se o popup for bloqueado ou não suportado (ex: webview).
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (e) {
+      const redirectFallback = [
+        "auth/popup-blocked",
+        "auth/cancelled-popup-request",
+        "auth/operation-not-supported-in-environment",
+        "auth/web-storage-unsupported",
+      ];
+      if (redirectFallback.includes(e.code)) {
+        await signInWithRedirect(auth, googleProvider);
+      } else if (e.code === "auth/popup-closed-by-user") {
+        // usuário fechou — não faz nada
+      } else {
+        throw e;
       }
     }
   }

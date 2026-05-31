@@ -641,7 +641,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
 }
 
 export default function App(){
-  const { user, loading: authLoading } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const { pregnancy, pregnancies, myRole, realRole, previewRole, setPreviewRole, previewing, loading: pregLoading, updatePregnancy, selectPregnancy } = usePregnancy();
   const {
     diary, addDiaryEntry, deleteDiaryEntry,
@@ -874,6 +874,15 @@ export default function App(){
               onSave={d=>{ updatePregnancy(d); setModal(null); showT("📅 Data atualizada!"); }}
               onCancel={()=>setModal(null)}
             />
+            <button onClick={()=>logout()} style={{
+              width:"100%",marginTop:16,padding:14,background:"transparent",
+              color:"#b91c1c",border:"1.5px solid #fca5a5",borderRadius:14,
+              fontFamily:"'DM Sans',sans-serif",fontSize:14,fontWeight:500,cursor:"pointer",
+              display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+            }}>
+              🚪 Sair da conta
+            </button>
+            {user?.email && <div style={{textAlign:"center",fontSize:11,color:C.taupe,marginTop:8}}>{user.email}</div>}
           </Mdl>
         )}
 
