@@ -1,7 +1,24 @@
 import { useState, useEffect, useRef } from "react";
+import { useAuth } from "./contexts/AuthContext";
+import { usePregnancy } from "./contexts/PregnancyContext";
+import { useData } from "./contexts/DataContext";
+import Login from "./screens/Login";
+import CreatePregnancy from "./screens/CreatePregnancy";
+import Members from "./screens/Members";
+import InviteAccept from "./screens/InviteAccept";
+import Contractions from "./screens/Contractions";
+import Personalization from "./screens/Personalization";
+import Tips from "./screens/Tips";
+import BirthPlan from "./screens/BirthPlan";
+import BirthTracker from "./screens/BirthTracker";
+import Admin from "./screens/Admin";
+import { buildCSS, getColors } from "./styles/theme";
 
-const C = { vinho:"#4e2b53", taupe:"#ab9d95", bege:"#eed1b8", rosa:"#c38a97", verde:"#9fb0a0", bg:"#f7ece0" };
 const SF = "'Cormorant Garamond',Georgia,serif";
+
+// Cores padrão (rosa-bella) usadas pelos componentes inline.
+// O App sobrescreve o CSS dinamicamente pelo tema da gestação.
+let C = getColors("rosa-bella");
 
 const WEEKS = {
   4:{e:"🫐",f:"Mirtilo",o:"grão de pimenta",s:"2mm",d:"Implantação completa. Coração começa a se formar. Saco amniótico presente."},
@@ -78,95 +95,6 @@ function usePersisted(key,def){
   const set=val=>sv(prev=>{const next=typeof val==="function"?val(prev):val;try{localStorage.setItem(key,JSON.stringify(next));}catch{}return next;});
   return[v,set];
 }
-
-const CSS=`
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font-smoothing:antialiased}
-.R{max-width:480px;margin:0 auto;min-height:100vh;background:${C.bg};position:relative}
-@media(min-width:481px){.R{border-left:1px solid ${C.bege};border-right:1px solid ${C.bege};box-shadow:0 0 60px rgba(78,43,83,.1)}}
-.HDR{background:${C.vinho};position:relative;overflow:hidden}
-.HDR::after{content:'';position:absolute;bottom:-1px;left:-5%;width:110%;height:36px;background:${C.bg};border-radius:50% 50% 0 0/100% 100% 0 0}
-.HT{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 0}
-.brand{font-family:${SF};font-size:20px;font-weight:300;color:${C.bege};letter-spacing:.5px}
-.brand em{font-style:italic;color:${C.rosa}}
-.hcfg{width:34px;height:34px;border-radius:50%;background:rgba(238,209,184,.12);border:none;cursor:pointer;color:${C.bege};font-size:15px;display:flex;align-items:center;justify-content:center}
-.WHO{text-align:center;padding:20px 20px 46px}
-.wey{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:rgba(238,209,184,.55);margin-bottom:3px}
-.wbig{font-family:${SF};font-size:84px;font-weight:300;color:${C.bege};line-height:1}
-.wunit{font-family:${SF};font-size:22px;font-style:italic;color:${C.rosa}}
-.wmeta{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
-.tribadge{font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:20px;border:1px solid}
-.wdays{font-size:12px;color:rgba(238,209,184,.5)}
-.SCR{padding:0 16px 100px;display:flex;flex-direction:column;gap:14px}
-.card{background:white;border-radius:20px;padding:18px;box-shadow:0 2px 14px rgba(78,43,83,.07);border:1px solid rgba(195,138,151,.08)}
-.ctit{font-family:${SF};font-size:18px;font-weight:400;color:${C.vinho};margin-bottom:12px;display:flex;align-items:center;gap:8px}
-.pbar{height:7px;background:${C.bege};border-radius:99px;overflow:hidden;margin:6px 0}
-.pfill{height:100%;background:linear-gradient(90deg,${C.rosa},${C.vinho});border-radius:99px;transition:width 1s ease}
-.srow{display:flex;gap:10px;margin-top:12px}
-.sbox{flex:1;text-align:center;background:rgba(238,209,184,.3);border-radius:12px;padding:10px 6px}
-.sn{font-family:${SF};font-size:24px;color:${C.vinho};display:block;line-height:1}
-.sl{font-size:9px;color:${C.taupe};text-transform:uppercase;letter-spacing:1px;margin-top:3px;display:block}
-.NAV{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;border-top:1px solid ${C.bege};display:flex;padding:8px 0 14px;z-index:100;box-shadow:0 -4px 20px rgba(78,43,83,.08)}
-.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:4px 0}
-.ni{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s}
-.nb.A .ni{background:${C.vinho}}
-.nl{font-size:9px;font-weight:500;color:${C.taupe};letter-spacing:.3px}
-.nb.A .nl{color:${C.vinho}}
-.inp{width:100%;padding:12px 14px;border:1.5px solid ${C.bege};border-radius:12px;background:rgba(238,209,184,.15);font-family:'DM Sans',sans-serif;font-size:14px;color:${C.vinho};outline:none;transition:border-color .2s}
-.inp:focus{border-color:${C.rosa}}
-.inp::placeholder{color:${C.taupe};opacity:.7}
-.lbl{display:block;font-size:10px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:${C.taupe};margin-bottom:6px}
-.fg{margin-bottom:14px}
-.btnp{width:100%;padding:14px;background:${C.vinho};color:${C.bege};border:none;border-radius:14px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
-.btnp:disabled{opacity:.35;cursor:not-allowed}
-.btno{padding:10px 16px;background:transparent;color:${C.taupe};border:1.5px solid ${C.bege};border-radius:12px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}
-.skip{width:100%;padding:12px;background:transparent;color:${C.taupe};border:1.5px solid ${C.bege};border-radius:14px;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:8px}
-.OVL{position:fixed;inset:0;background:rgba(78,43,83,.45);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:flex-end}
-.MDL{background:white;border-radius:24px 24px 0 0;padding:20px 20px 40px;width:100%;max-width:480px;margin:0 auto;animation:su .3s ease;max-height:88vh;overflow-y:auto}
-.mh{width:36px;height:4px;background:${C.bege};border-radius:2px;margin:0 auto 18px}
-.mt{font-family:${SF};font-size:24px;color:${C.vinho};margin-bottom:4px}
-.ms{font-size:13px;color:${C.taupe};margin-bottom:18px;line-height:1.5}
-@keyframes su{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}
-.mgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
-.mbe{display:flex;flex-direction:column;align-items:center;padding:10px 4px;border-radius:14px;border:1.5px solid transparent;background:${C.bege}33;cursor:pointer;transition:all .2s}
-.mbe.S{background:rgba(195,138,151,.15);border-color:${C.rosa}}
-.stabs{display:flex;background:${C.bege}44;border-radius:12px;padding:4px;gap:4px;margin-bottom:16px}
-.stab{flex:1;padding:9px 4px;background:transparent;border:none;border-radius:10px;font-size:11px;font-family:'DM Sans',sans-serif;color:${C.taupe};cursor:pointer;font-weight:500}
-.stab.A{background:${C.vinho};color:white}
-.LI{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid ${C.bege}55}
-.LI:last-child{border-bottom:none}
-.liic{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;background:${C.bege}55}
-.dcard{background:white;border-radius:18px;padding:16px;border:1px solid rgba(195,138,151,.1);box-shadow:0 2px 10px rgba(78,43,83,.06)}
-.kbtn{width:150px;height:150px;border-radius:50%;background:linear-gradient(135deg,${C.rosa},${C.vinho});border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 8px 32px rgba(78,43,83,.28);transition:all .12s;margin:0 auto}
-.kbtn:active{transform:scale(.92)}
-.wchips{display:flex;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:none}
-.wchips::-webkit-scrollbar{display:none}
-.wchip{flex-shrink:0;padding:7px 13px;border-radius:20px;font-size:12px;border:1.5px solid ${C.bege};background:transparent;cursor:pointer;color:${C.taupe}}
-.wchip.A{background:${C.vinho};color:white;border-color:${C.vinho}}
-.cki{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid ${C.bege}33}
-.cki:last-child{border-bottom:none}
-.cb{width:20px;height:20px;border-radius:6px;border:2px solid ${C.bege};background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.cb.C{background:${C.verde};border-color:${C.verde}}
-.chip{display:inline-flex;padding:6px 12px;border-radius:20px;border:1.5px solid ${C.bege};font-size:12px;cursor:pointer;background:transparent;color:${C.taupe}}
-.chip.S{background:${C.rosa}22;border-color:${C.rosa};color:${C.vinho}}
-.pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.pthumb{aspect-ratio:1;border-radius:14px;overflow:hidden;background:${C.bege}33;display:flex;align-items:center;justify-content:center;border:1.5px solid ${C.bege};cursor:pointer;position:relative}
-.pthumb img{width:100%;height:100%;object-fit:cover}
-.padd{aspect-ratio:1;border-radius:14px;border:1.5px dashed ${C.rosa}66;background:rgba(195,138,151,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:4px;font-size:22px;color:${C.rosa}}
-.emp{text-align:center;padding:36px 16px}
-.WSCRN{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;background:linear-gradient(160deg,${C.bege} 0%,#f5e2d0 100%)}
-.wcrd{background:rgba(255,255,255,.8);backdrop-filter:blur(12px);border:1px solid rgba(195,138,151,.18);border-radius:24px;padding:28px 22px;width:100%;max-width:400px;box-shadow:0 8px 40px rgba(78,43,83,.1)}
-.tbns{display:flex;gap:8px;margin-bottom:16px}
-.tbtn{flex:1;padding:10px 6px;border-radius:10px;font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500}
-.ndb{background:linear-gradient(135deg,${C.rosa}18,${C.bege}44);border:1.5px dashed ${C.rosa}55;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer}
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:${C.vinho};color:${C.bege};padding:10px 20px;border-radius:20px;font-size:13px;z-index:400;animation:ta 2.3s ease forwards;white-space:nowrap}
-@keyframes ta{0%{opacity:0;transform:translateX(-50%) translateY(8px)}15%{opacity:1;transform:translateX(-50%) translateY(0)}75%{opacity:1}100%{opacity:0}}
-@keyframes kp{0%,100%{box-shadow:0 8px 32px rgba(78,43,83,.28)}50%{box-shadow:0 8px 48px rgba(78,43,83,.4),0 0 0 14px rgba(195,138,151,.12)}}
-.kP{animation:kp 1.8s ease infinite}
-@keyframes fu{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-.fu{animation:fu .35s ease both}
-`;
 
 function Mdl({title,sub,onClose,children}){
   return(
@@ -307,6 +235,7 @@ function Home({preg,week,onCfg}){
           ))}
         </div>
       )}
+      <Tips compact={true}/>
       <div className="card fu">
         <div className="ctit"><span>💡</span>Dica da semana</div>
         <p style={{fontSize:13,color:"#555",lineHeight:1.7}}>
@@ -320,13 +249,13 @@ function Home({preg,week,onCfg}){
   );
 }
 
-function Diary({entries,setEntries,week}){
+function Diary({entries,addEntry,deleteEntry,week}){
   const[open,setOpen]=useState(false);
   const[mood,setMood]=useState(null);
   const[text,setText]=useState("");
-  function add(){
+  async function add(){
     if(!text.trim()&&!mood)return;
-    setEntries(p=>[{id:uid(),date:tod(),week:week||"—",mood,text:text.trim()},...p]);
+    await addEntry({mood,text:text.trim(),week});
     setOpen(false);setMood(null);setText("");
   }
   const Btn=({onClick})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16,padding:4}} onClick={onClick}>🗑️</button>;
@@ -350,7 +279,7 @@ function Diary({entries,setEntries,week}){
                 </div>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   {e.mood&&<span style={{fontSize:22}}>{e.mood}</span>}
-                  <Btn onClick={()=>setEntries(p=>p.filter(x=>x.id!==e.id))}/>
+                  <Btn onClick={()=>deleteEntry(e.id)}/>
                 </div>
               </div>
               {e.text&&<div style={{fontSize:13,color:"#444",lineHeight:1.6,whiteSpace:"pre-wrap"}}>{e.text}</div>}
@@ -381,7 +310,8 @@ function Diary({entries,setEntries,week}){
   );
 }
 
-function Baby({week,kicks,setKicks}){
+function Baby({week}){
+  const{kicks,addKick,resetKicks}=useData();
   const[sw,setSw]=useState(week||12);
   const GOAL=10;
   const todK=kicks[tod()]||0;
@@ -397,7 +327,7 @@ function Baby({week,kicks,setKicks}){
         <p style={{fontSize:13,color:C.taupe,marginBottom:20,lineHeight:1.5}}>Toque cada vez que sentir o bebê se mexer. Meta: {GOAL} chutes por dia.</p>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:20}}>
           <div>
-            <button className={`kbtn ${todK>0?"kP":""}`} onClick={()=>setKicks(p=>({...p,[tod()]:(p[tod()]||0)+1}))}>
+            <button className={`kbtn ${todK>0?"kP":""}`} onClick={()=>addKick(tod())}>
               <span style={{fontFamily:SF,fontSize:56,color:"white",lineHeight:1,fontWeight:300}}>{todK}</span>
               <span style={{fontSize:11,color:"rgba(255,255,255,.75)",letterSpacing:1}}>CHUTES</span>
             </button>
@@ -411,7 +341,7 @@ function Baby({week,kicks,setKicks}){
             <div className="pbar" style={{height:10}}><div className="pfill" style={{width:`${prog}%`}}/></div>
             {todK>=GOAL&&<div style={{textAlign:"center",marginTop:8,fontSize:13,color:C.verde,fontWeight:500}}>🎉 Meta atingida! Bebê está ativo!</div>}
           </div>
-          <button className="btno" style={{width:"100%"}} onClick={()=>setKicks(p=>({...p,[tod()]:0}))}>Zerar contador de hoje</button>
+          <button className="btno" style={{width:"100%"}} onClick={()=>resetKicks(tod())}>Zerar contador de hoje</button>
         </div>
       </div>
       <div className="card fu">
@@ -455,7 +385,7 @@ function Baby({week,kicks,setKicks}){
   );
 }
 
-function Health({cons,setCons,meds,setMeds,syms,setSyms}){
+function Health({appointments,addAppointment,deleteAppointment,medications,addMedication,deleteMedication,symptoms,addSymptom,deleteSymptom}){
   const[sub,setSub]=useState("c");
   const[modal,setModal]=useState(null);
   const[cDt,setCDt]=useState(tod());const[cDc,setCDc]=useState("");const[cTp,setCTp]=useState(CTYPES[0]);const[cNt,setCNt]=useState("");
@@ -463,9 +393,9 @@ function Health({cons,setCons,meds,setMeds,syms,setSyms}){
   const[sCh,setSCh]=useState([]);const[sNt,setSNt]=useState("");
   const tg=c=>setSCh(p=>p.includes(c)?p.filter(x=>x!==c):[...p,c]);
   const D=({fn})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16,padding:4}} onClick={fn}>🗑️</button>;
-  function addC(){if(!cDc.trim())return;setCons(p=>[...p,{id:uid(),date:cDt,doc:cDc,type:cTp,notes:cNt}].sort((a,b)=>b.date.localeCompare(a.date)));setModal(null);setCDc("");setCNt("");}
-  function addM(){if(!mN.trim())return;setMeds(p=>[...p,{id:uid(),name:mN,dose:mD,time:mT}]);setModal(null);setMN("");setMD("");setMT("");}
-  function addS(){if(!sCh.length&&!sNt.trim())return;setSyms(p=>[{id:uid(),date:tod(),items:sCh,notes:sNt},...p]);setModal(null);setSCh([]);setSNt("");}
+  async function addC(){if(!cDc.trim())return;await addAppointment({date:cDt,doctor:cDc,type:cTp,notes:cNt});setModal(null);setCDc("");setCNt("");}
+  async function addM(){if(!mN.trim())return;await addMedication({name:mN,dose:mD,time:mT});setModal(null);setMN("");setMD("");setMT("");}
+  async function addS(){if(!sCh.length&&!sNt.trim())return;await addSymptom({items:sCh,notes:sNt});setModal(null);setSCh([]);setSNt("");}
   return(
     <div className="SCR">
       <div className="stabs fu">
@@ -476,12 +406,12 @@ function Health({cons,setCons,meds,setMeds,syms,setSyms}){
       {sub==="c"&&<>
         <button className="btnp fu" onClick={()=>setModal("c")}>+ Adicionar consulta</button>
         <div className="card fu" style={{marginTop:12}}>
-          {cons.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>🩺</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhuma consulta</div><div style={{fontSize:13,color:C.taupe}}>Registre suas consultas de pré-natal</div></div>:
-          cons.map(c=>(
+          {appointments.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>🩺</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhuma consulta</div><div style={{fontSize:13,color:C.taupe}}>Registre suas consultas de pré-natal</div></div>:
+          appointments.map(c=>(
             <div key={c.id} className="LI">
               <div className="liic">🩺</div>
-              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.vinho}}>{c.type} — {c.doc}</div><div style={{fontSize:12,color:C.taupe,marginTop:2}}>{fmtD(c.date)}{c.notes?` · ${c.notes}`:""}</div></div>
-              <D fn={()=>setCons(p=>p.filter(x=>x.id!==c.id))}/>
+              <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.vinho}}>{c.type} — {c.doctor}</div><div style={{fontSize:12,color:C.taupe,marginTop:2}}>{fmtD(c.date)}{c.notes?` · ${c.notes}`:""}</div></div>
+              <D fn={()=>deleteAppointment(c.id)}/>
             </div>
           ))}
         </div>
@@ -489,12 +419,12 @@ function Health({cons,setCons,meds,setMeds,syms,setSyms}){
       {sub==="m"&&<>
         <button className="btnp fu" onClick={()=>setModal("m")}>+ Adicionar medicamento</button>
         <div className="card fu" style={{marginTop:12}}>
-          {meds.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>💊</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhum medicamento</div><div style={{fontSize:13,color:C.taupe}}>Vitaminas, suplementos e remédios</div></div>:
-          meds.map(m=>(
+          {medications.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>💊</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhum medicamento</div><div style={{fontSize:13,color:C.taupe}}>Vitaminas, suplementos e remédios</div></div>:
+          medications.map(m=>(
             <div key={m.id} className="LI">
               <div className="liic">💊</div>
               <div style={{flex:1}}><div style={{fontSize:14,fontWeight:500,color:C.vinho}}>{m.name}</div><div style={{fontSize:12,color:C.taupe,marginTop:2}}>{[m.dose,m.time].filter(Boolean).join(" · ")}</div></div>
-              <D fn={()=>setMeds(p=>p.filter(x=>x.id!==m.id))}/>
+              <D fn={()=>deleteMedication(m.id)}/>
             </div>
           ))}
         </div>
@@ -502,12 +432,12 @@ function Health({cons,setCons,meds,setMeds,syms,setSyms}){
       {sub==="s"&&<>
         <button className="btnp fu" onClick={()=>setModal("s")}>+ Registrar sintomas</button>
         <div style={{display:"flex",flexDirection:"column",gap:10,marginTop:12}}>
-          {syms.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhum registro</div><div style={{fontSize:13,color:C.taupe}}>Acompanhe seus sintomas diários</div></div>:
-          syms.map(s=>(
+          {symptoms.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>📋</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Nenhum registro</div><div style={{fontSize:13,color:C.taupe}}>Acompanhe seus sintomas diários</div></div>:
+          symptoms.map(s=>(
             <div key={s.id} className="dcard fu">
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
                 <span style={{fontSize:12,color:C.taupe}}>{fmtD(s.date)} — {shortD(s.date)}</span>
-                <D fn={()=>setSyms(p=>p.filter(x=>x.id!==s.id))}/>
+                <D fn={()=>deleteSymptom(s.id)}/>
               </div>
               <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:s.notes?8:0}}>
                 {s.items.map(i=><span key={i} style={{background:`${C.rosa}22`,color:C.vinho,border:`1px solid ${C.rosa}44`,borderRadius:20,fontSize:11,padding:"3px 10px"}}>{i}</span>)}
@@ -541,18 +471,18 @@ function Health({cons,setCons,meds,setMeds,syms,setSyms}){
   );
 }
 
-function More({env,setEnv,songs,setSongs,photos,setPhotos,week}){
+function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,addSong,deleteSong,photos,addPhoto,deletePhoto,week}){
   const[sub,setSub]=useState("e");
   const[modal,setModal]=useState(null);
   const[sT,setST]=useState("");const[sA,setSA]=useState("");
   const[pU,setPU]=useState("");const[pC,setPC]=useState("");
   const[ni,setNi]=useState("");const[nc,setNc]=useState("👕 Roupinhas");
-  const cats=[...new Set(env.map(i=>i.cat))];
-  const done=env.filter(i=>i.done).length;
+  const cats=[...new Set(layette.map(i=>i.cat))];
+  const done=layette.filter(i=>i.done).length;
   const D=({fn})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:13,padding:4}} onClick={fn}>✕</button>;
-  function addE(){if(!ni.trim())return;setEnv(p=>[...p,{id:uid(),cat:nc,n:ni.trim(),done:false}]);setNi("");setModal(null);}
-  function addS(){if(!sT.trim())return;setSongs(p=>[...p,{id:uid(),title:sT.trim(),artist:sA.trim()}]);setModal(null);setST("");setSA("");}
-  function addP(){if(!pU.trim())return;setPhotos(p=>[...p,{id:uid(),url:pU.trim(),week:week||"—",date:tod()}]);setModal(null);setPU("");setPC("");}
+  async function addE(){if(!ni.trim())return;await addLayetteItem({cat:nc,n:ni.trim()});setNi("");setModal(null);}
+  async function addS(){if(!sT.trim())return;await addSong({title:sT.trim(),artist:sA.trim()});setModal(null);setST("");setSA("");}
+  async function addP(){if(!pU.trim())return;await addPhoto({url:pU.trim(),week:week||"—",caption:pC.trim()});setModal(null);setPU("");setPC("");}
   return(
     <div className="SCR">
       <div className="stabs fu">
@@ -564,22 +494,22 @@ function More({env,setEnv,songs,setSongs,photos,setPhotos,week}){
         <div className="card fu" style={{marginBottom:12}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:8}}>
             <span style={{fontFamily:SF,fontSize:17,color:C.vinho}}>Lista do Enxoval</span>
-            <span style={{fontSize:12,color:C.taupe}}>{done}/{env.length}</span>
+            <span style={{fontSize:12,color:C.taupe}}>{done}/{layette.length}</span>
           </div>
-          <div className="pbar"><div className="pfill" style={{width:env.length?`${(done/env.length)*100}%`:"0%"}}/></div>
+          <div className="pbar"><div className="pfill" style={{width:layette.length?`${(done/layette.length)*100}%`:"0%"}}/></div>
         </div>
         <button className="btnp fu" onClick={()=>setModal("e")} style={{marginBottom:12}}>+ Adicionar item</button>
         <div className="card fu">
           {cats.map(cat=>(
             <div key={cat}>
               <div style={{fontSize:12,fontWeight:600,color:C.vinho,margin:"14px 0 6px",paddingBottom:6,borderBottom:`1px solid ${C.bege}`}}>{cat}</div>
-              {env.filter(i=>i.cat===cat).map(item=>(
+              {layette.filter(i=>i.cat===cat).map(item=>(
                 <div key={item.id} className="cki">
-                  <div className={`cb ${item.done?"C":""}`} onClick={()=>setEnv(p=>p.map(i=>i.id===item.id?{...i,done:!i.done}:i))}>
+                  <div className={`cb ${item.done?"C":""}`} onClick={()=>toggleLayetteItem(item.id,!item.done)}>
                     {item.done&&<span style={{fontSize:12,color:"white"}}>✓</span>}
                   </div>
                   <span style={{fontSize:13,color:item.done?C.taupe:C.vinho,textDecoration:item.done?"line-through":"none",flex:1}}>{item.n}</span>
-                  <D fn={()=>setEnv(p=>p.filter(x=>x.id!==item.id))}/>
+                  <D fn={()=>deleteLayetteItem(item.id)}/>
                 </div>
               ))}
             </div>
@@ -597,7 +527,7 @@ function More({env,setEnv,songs,setSongs,photos,setPhotos,week}){
                 <div style={{fontSize:13,fontWeight:500,color:C.vinho}}>{s.title}</div>
                 {s.artist&&<div style={{fontSize:11,color:C.taupe}}>{s.artist}</div>}
               </div>
-              <button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16}} onClick={()=>setSongs(p=>p.filter(x=>x.id!==s.id))}>🗑️</button>
+              <button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16}} onClick={()=>deleteSong(s.id)}>🗑️</button>
             </div>
           ))}
         </div>
@@ -609,7 +539,7 @@ function More({env,setEnv,songs,setSongs,photos,setPhotos,week}){
           <div className="pgrid">
             <div className="padd" onClick={()=>setModal("p")}><span>+</span><span style={{fontSize:10,color:C.taupe}}>Nova foto</span></div>
             {photos.map(p=>(
-              <div key={p.id} className="pthumb" onClick={()=>setPhotos(pr=>pr.filter(x=>x.id!==p.id))}>
+              <div key={p.id} className="pthumb" onClick={()=>deletePhoto(p.id)}>
                 <img src={p.url} alt={`Sem ${p.week}`} onError={e=>e.target.style.display="none"}/>
                 <span style={{position:"absolute",bottom:5,left:0,right:0,textAlign:"center",fontSize:9,color:"white",textShadow:"0 1px 4px rgba(0,0,0,.5)"}}>Sem. {p.week}</span>
               </div>
@@ -638,43 +568,59 @@ function More({env,setEnv,songs,setSongs,photos,setPhotos,week}){
 }
 
 export default function App(){
-  const[screen,setScreen]=useState("loading");
-  const[tab,setTab]=useState("home");
-  const[showCfg,setShowCfg]=useState(false);
-  const[toast,setToast]=useState(null);
-  const tRef=useRef(null);
-  const[preg,setPreg]=usePersisted("bg-preg",null);
-  const[diary,setDiary]=usePersisted("bg-diary",[]);
-  const[kicks,setKicks]=usePersisted("bg-kicks",{});
-  const[cons,setCons]=usePersisted("bg-cons",[]);
-  const[meds,setMeds]=usePersisted("bg-meds",[]);
-  const[syms,setSyms]=usePersisted("bg-syms",[]);
-  const[env,setEnv]=usePersisted("bg-env",DEF_ENV);
-  const[songs,setSongs]=usePersisted("bg-songs",[]);
-  const[photos,setPhotos]=usePersisted("bg-photos",[]);
+  const { user, loading: authLoading } = useAuth();
+  const { pregnancy, loading: pregLoading, updatePregnancy } = usePregnancy();
+  const {
+    diary, addDiaryEntry, deleteDiaryEntry,
+    kicks, addKick, resetKicks,
+    appointments, addAppointment, deleteAppointment,
+    medications, addMedication, deleteMedication,
+    symptoms, addSymptom, deleteSymptom,
+    layette, addLayetteItem, toggleLayetteItem, deleteLayetteItem,
+    songs, addSong, deleteSong,
+    photos, addPhoto, deletePhoto,
+  } = useData();
+  const [tab, setTab] = useState("home");
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState(null);
+  const tRef = useRef(null);
 
-  useEffect(()=>{
-    try{const r=localStorage.getItem("bg-preg");setScreen(r?"main":"welcome");}
-    catch{setScreen("welcome");}
-  },[]);
+  // Detecta convite na URL (?invite=ID)
+  const inviteId = new URLSearchParams(window.location.search).get("invite");
 
-  const week=preg?calcWeek(preg.lmp):null;
-  const tri=week?getTri(week):null;
-  const dl=preg?dLeft(preg.dpp):null;
+  const palette = pregnancy?.theme?.palette ?? "rosa-bella";
+  C = getColors(palette); // atualiza o C do módulo para que os sub-componentes usem o tema correto
+  const CSS = buildCSS(C);
 
-  function showT(msg){clearTimeout(tRef.current);setToast(msg);tRef.current=setTimeout(()=>setToast(null),2300);}
-  function wDone(data){if(data){setPreg(data);showT("🌸 Gestação configurada!");}setScreen("main");}
+  const week = pregnancy ? calcWeek(pregnancy.lmp) : null;
+  const tri  = week ? getTri(week) : null;
+  const dl   = pregnancy ? dLeft(pregnancy.dpp) : null;
 
-  const NAV=[{id:"home",ic:"🏠",l:"Início"},{id:"diary",ic:"📖",l:"Diário"},{id:"baby",ic:"👶",l:"Bebê"},{id:"health",ic:"🩺",l:"Saúde"},{id:"more",ic:"☰",l:"Mais"}];
+  function showT(msg){ clearTimeout(tRef.current); setToast(msg); tRef.current = setTimeout(()=>setToast(null), 2300); }
 
-  if(screen==="loading") return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:C.bg}}>
-      <style>{CSS}</style>
-      <span style={{fontFamily:SF,fontSize:32,color:C.vinho}}>Bella <em style={{fontStyle:"italic",color:C.rosa}}>Gravidez</em></span>
+  // Loading inicial
+  if (authLoading || pregLoading) return (
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#f7ece0"}}>
+      <span style={{fontFamily:SF,fontSize:32,color:"#4e2b53"}}>Bella <em style={{fontStyle:"italic",color:"#c38a97"}}>Gravidez</em></span>
     </div>
   );
 
-  if(screen==="welcome") return(<><style>{CSS}</style><div className="R"><Welcome onDone={wDone}/></div></>);
+  // Rota admin
+  if (window.location.pathname.includes("/admin")) return <Admin />;
+
+  // Convite na URL → tela de aceitar convite
+  if (inviteId) return <InviteAccept inviteId={inviteId} onDone={() => {
+    window.history.replaceState({}, "", "/bella-gravidez/");
+    window.location.reload();
+  }} />;
+
+  // Não autenticada → tela de login
+  if (!user) return <Login />;
+
+  // Autenticada mas sem gestação → criar gestação
+  if (!pregnancy) return <CreatePregnancy />;
+
+  const NAV=[{id:"home",ic:"🏠",l:"Início"},{id:"diary",ic:"📖",l:"Diário"},{id:"contractions",ic:"⏱️",l:"Contrações"},{id:"birth",ic:"🌟",l:"Parto"},{id:"more",ic:"☰",l:"Mais"}];
 
   return(
     <>
@@ -682,8 +628,13 @@ export default function App(){
       <div className="R">
         <div className="HDR">
           <div className="HT">
-            <span className="brand">Bella <em>Gravidez</em></span>
-            <button className="hcfg" onClick={()=>setShowCfg(true)}>⚙️</button>
+            <span className="brand">
+              {pregnancy.babyNickname
+                ? <>Bella <em>{pregnancy.babyNickname}</em></>
+                : <>Bella <em>Gravidez</em></>
+              }
+            </span>
+            <button className="hcfg" onClick={()=>setModal("cfg")}>⚙️</button>
           </div>
           <div className="WHO">
             <div className="wey">semana atual</div>
@@ -698,11 +649,23 @@ export default function App(){
           </div>
         </div>
 
-        {tab==="home"&&<Home preg={preg} week={week} onCfg={()=>setShowCfg(true)}/>}
-        {tab==="diary"&&<Diary entries={diary} setEntries={setDiary} week={week}/>}
-        {tab==="baby"&&<Baby week={week} kicks={kicks} setKicks={setKicks}/>}
-        {tab==="health"&&<Health cons={cons} setCons={setCons} meds={meds} setMeds={setMeds} syms={syms} setSyms={setSyms}/>}
-        {tab==="more"&&<More env={env} setEnv={setEnv} songs={songs} setSongs={setSongs} photos={photos} setPhotos={setPhotos} week={week}/>}
+        {tab==="home"&&<Home preg={pregnancy} week={week} onCfg={()=>setModal("cfg")}/>}
+        {tab==="diary"&&<Diary entries={diary} addEntry={addDiaryEntry} deleteEntry={deleteDiaryEntry} week={week}/>}
+        {tab==="contractions"&&<Contractions/>}
+        {tab==="tips"&&<Tips/>}
+        {tab==="birthplan"&&<BirthPlan/>}
+        {tab==="birth"&&<BirthTracker/>}
+        {tab==="health"&&<Health
+          appointments={appointments} addAppointment={addAppointment} deleteAppointment={deleteAppointment}
+          medications={medications} addMedication={addMedication} deleteMedication={deleteMedication}
+          symptoms={symptoms} addSymptom={addSymptom} deleteSymptom={deleteSymptom}
+        />}
+        {tab==="more"&&<More
+          layette={layette} addLayetteItem={addLayetteItem} toggleLayetteItem={toggleLayetteItem} deleteLayetteItem={deleteLayetteItem}
+          songs={songs} addSong={addSong} deleteSong={deleteSong}
+          photos={photos} addPhoto={addPhoto} deletePhoto={deletePhoto}
+          week={week}
+        />}
 
         <div className="NAV">
           {NAV.map(n=>(
@@ -713,9 +676,45 @@ export default function App(){
           ))}
         </div>
 
-        {showCfg&&(
-          <Mdl title="Configurar gestação" sub="Atualize as datas da sua gravidez" onClose={()=>setShowCfg(false)}>
-            <DateForm initial={preg} onSave={d=>{setPreg(d);setShowCfg(false);showT("📅 Data atualizada!");}} onCancel={()=>setShowCfg(false)}/>
+        {modal==="cfg"&&(
+          <Mdl title="Configurações" onClose={()=>setModal(null)}>
+            <div style={{marginBottom:20,display:"flex",flexDirection:"column",gap:8}}>
+              {[
+                {id:"members",   ic:"👥", t:"Membros e convites",    s:"Pai, doula, obstetra e permissões"},
+                {id:"personal",  ic:"🎨", t:"Personalização",        s:"Cores e apelido do bebê"},
+                {id:"admin",     ic:"👑", t:"Painel Admin",          s:"Acesso master — gestão da plataforma"},
+              ].map(btn=>(
+                <button key={btn.id} onClick={()=>btn.id==="admin"?window.location.href="/bella-gravidez/admin":setModal(btn.id)} style={{
+                  width:"100%",display:"flex",alignItems:"center",gap:12,padding:"14px 16px",
+                  background:`rgba(238,209,184,.2)`,border:`1.5px solid ${C.bege}`,borderRadius:14,
+                  cursor:"pointer",
+                }}>
+                  <span style={{fontSize:22}}>{btn.ic}</span>
+                  <div style={{textAlign:"left"}}>
+                    <div style={{fontSize:14,fontWeight:500,color:C.vinho}}>{btn.t}</div>
+                    <div style={{fontSize:12,color:C.taupe}}>{btn.s}</div>
+                  </div>
+                  <span style={{marginLeft:"auto",color:C.rosa}}>→</span>
+                </button>
+              ))}
+            </div>
+            <DateForm
+              initial={pregnancy}
+              onSave={d=>{ updatePregnancy(d); setModal(null); showT("📅 Data atualizada!"); }}
+              onCancel={()=>setModal(null)}
+            />
+          </Mdl>
+        )}
+
+        {modal==="members"&&(
+          <Mdl title="Membros" sub="Gerencie quem acompanha sua gestação" onClose={()=>setModal(null)}>
+            <Members onClose={()=>setModal(null)}/>
+          </Mdl>
+        )}
+
+        {modal==="personal"&&(
+          <Mdl title="Personalização" sub="Deixe o app com a sua cara 🎨" onClose={()=>setModal(null)}>
+            <Personalization onClose={()=>setModal(null)}/>
           </Mdl>
         )}
 
