@@ -1,15 +1,18 @@
 import sharp from "sharp";
-import { writeFileSync } from "fs";
+import { existsSync } from "fs";
 import { ICON_SVG } from "./icon-svg.mjs";
 
-const buf = Buffer.from(ICON_SVG);
+// Se existir a imagem do Recraft em scripts/icon-source.(png|jpg), usa ela.
+// Senão, cai para o SVG desenhado.
+const candidates = ["scripts/icon-source.png", "scripts/icon-source.jpg", "scripts/icon-source.jpeg"];
+const src = candidates.find(existsSync);
+const input = src ? src : Buffer.from(ICON_SVG);
+console.log(src ? `Usando imagem: ${src}` : "Usando SVG desenhado (nenhuma imagem encontrada)");
 
-// Ícones PNG do app (PWA / tela inicial / Android / iOS)
-await sharp(buf).resize(192, 192).png().toFile("public/icon-192.png");
-await sharp(buf).resize(512, 512).png().toFile("public/icon-512.png");
-await sharp(buf).resize(180, 180).png().toFile("public/apple-touch-icon.png");
+// Ícones do app (PWA / tela inicial / Android / iOS) + favicon PNG da aba
+await sharp(input).resize(512, 512).png().toFile("public/icon-512.png");
+await sharp(input).resize(192, 192).png().toFile("public/icon-192.png");
+await sharp(input).resize(180, 180).png().toFile("public/apple-touch-icon.png");
+await sharp(input).resize(64, 64).png().toFile("public/favicon.png");
 
-// Favicon da aba (SVG escalável)
-writeFileSync("public/favicon.svg", ICON_SVG.trim() + "\n");
-
-console.log("✅ Ícones gerados: favicon.svg, icon-192, icon-512, apple-touch-icon");
+console.log("✅ Gerados: favicon.png, icon-192, icon-512, apple-touch-icon");
