@@ -101,6 +101,29 @@ const getWD=w=>{const ks=Object.keys(WEEKS).map(Number).sort((a,b)=>a-b);return 
 const getTri=w=>{if(w<=13)return{l:"1° Trimestre",c:C.verde};if(w<=27)return{l:"2° Trimestre",c:C.rosa};return{l:"3° Trimestre",c:C.vinho};};
 const last7=()=>Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(6-i));return d.toISOString().split("T")[0];});
 
+// Comprime imagem no cliente (redimensiona p/ máx 1000px, JPEG) → dataURL leve
+function compressImage(file,maxSize=1000,quality=0.72){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        let{width,height}=img;
+        if(width>height&&width>maxSize){height=Math.round(height*maxSize/width);width=maxSize;}
+        else if(height>maxSize){width=Math.round(width*maxSize/height);height=maxSize;}
+        const canvas=document.createElement("canvas");
+        canvas.width=width;canvas.height=height;
+        canvas.getContext("2d").drawImage(img,0,0,width,height);
+        resolve(canvas.toDataURL("image/jpeg",quality));
+      };
+      img.onerror=reject;
+      img.src=e.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function usePersisted(key,def){
   const[v,sv]=useState(()=>{try{const s=localStorage.getItem(key);return s!=null?JSON.parse(s):def;}catch{return def;}});
   const set=val=>sv(prev=>{const next=typeof val==="function"?val(prev):val;try{localStorage.setItem(key,JSON.stringify(next));}catch{}return next;});
@@ -494,8 +517,16 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
   const[sub,setSub]=useState("e");
   const[modal,setModal]=useState(null);
   const[sT,setST]=useState("");const[sA,setSA]=useState("");
-  const[pU,setPU]=useState("");const[pC,setPC]=useState("");
+  const[pU,setPU]=useState("");const[pC,setPC]=useState("");const[upLoading,setUpLoading]=useState(false);
   const[ni,setNi]=useState("");const[nc,setNc]=useState("👕 Roupinhas");
+  async function handlePhotoFile(e){
+    const file=e.target.files?.[0];
+    if(!file)return;
+    setUpLoading(true);
+    try{ setPU(await compressImage(file)); }
+    catch{ alert("Não foi possível processar a imagem."); }
+    setUpLoading(false);
+  }
   const cats=[...new Set(layette.map(i=>i.cat))];
   const done=layette.filter(i=>i.done).length;
   const D=({fn})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:13,padding:4}} onClick={fn}>✕</button>;
@@ -577,10 +608,33 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
         <div className="fg"><div className="lbl">Artista</div><input className="inp" placeholder="Nome do artista..." value={sA} onChange={e=>setSA(e.target.value)}/></div>
         <button className="btnp" onClick={addS} disabled={!sT.trim()}>Adicionar</button>
       </Mdl>}
-      {modal==="p"&&<Mdl title="Nova foto" sub="Cole o link da foto" onClose={()=>setModal(null)}>
-        <div className="fg"><div className="lbl">URL da foto</div><input className="inp" placeholder="https://..." value={pU} onChange={e=>setPU(e.target.value)}/></div>
+      {modal==="p"&&<Mdl title="Nova foto" sub="Tire uma foto ou escolha da galeria" onClose={()=>setModal(null)}>
+        {/* Upload da câmera/galeria (mobile abre a câmera) */}
+        <label style={{display:"block",marginBottom:14}}>
+          <div style={{
+            border:`1.5px dashed ${C.rosa}66`,borderRadius:14,padding:"20px 16px",
+            textAlign:"center",cursor:"pointer",background:`rgba(195,138,151,.06)`,
+          }}>
+            {upLoading?(
+              <span style={{fontSize:13,color:C.taupe}}>Processando imagem…</span>
+            ):pU&&pU.startsWith("data:")?(
+              <img src={pU} alt="" style={{maxHeight:140,borderRadius:10,maxWidth:"100%"}}/>
+            ):(
+              <>
+                <div style={{fontSize:28,marginBottom:4}}>📷</div>
+                <div style={{fontSize:13,color:C.vinho,fontWeight:500}}>Tirar foto / escolher</div>
+                <div style={{fontSize:11,color:C.taupe,marginTop:2}}>a imagem é otimizada automaticamente</div>
+              </>
+            )}
+          </div>
+          <input type="file" accept="image/*" capture="environment" onChange={handlePhotoFile} style={{display:"none"}}/>
+        </label>
+
+        <div style={{textAlign:"center",fontSize:11,color:C.taupe,margin:"4px 0 12px"}}>— ou —</div>
+
+        <div className="fg"><div className="lbl">Colar link (Google Fotos, Drive)</div><input className="inp" placeholder="https://..." value={pU.startsWith("data:")?"":pU} onChange={e=>setPU(e.target.value)}/></div>
         <div className="fg"><div className="lbl">Legenda</div><input className="inp" placeholder="28 semanas! Barrigão crescendo..." value={pC} onChange={e=>setPC(e.target.value)}/></div>
-        <button className="btnp" onClick={addP} disabled={!pU.trim()}>Salvar</button>
+        <button className="btnp" onClick={addP} disabled={!pU.trim()||upLoading}>Salvar</button>
       </Mdl>}
     </div>
   );

@@ -1,0 +1,12 @@
+{
+  "appId": "app.bellagravidez",
+  "appName": "Bella Gravidez",
+  "webDir": "dist",
+  "backgroundColor": "#f7ece0",
+  "plugins": {
+    "StatusBar": {
+      "style": "DEFAULT",
+      "backgroundColor": "#4e2b53"
+    }
+  }
+}

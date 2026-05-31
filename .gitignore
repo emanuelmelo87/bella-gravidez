@@ -29,3 +29,7 @@ dist-ssr
 
 # Claude
 .claude/
+
+# Capacitor (apps nativos gerados localmente)
+android/
+ios/
