@@ -734,7 +734,7 @@ export default function App(){
           <div className="HT">
             <span className="brand">
               {pregnancy.babyNickname
-                ? <>Bella <em>{pregnancy.babyNickname}</em></>
+                ? <><img src="/icon-192.png" alt="Bella"/><em>{pregnancy.babyNickname}</em></>
                 : <>Bella <em>Gravidez</em></>
               }
             </span>
