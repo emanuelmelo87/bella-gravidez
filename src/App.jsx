@@ -650,8 +650,8 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
 }
 
 export default function App(){
-  const { user, logout, isAdmin, loading: authLoading } = useAuth();
-  const { pregnancy, pregnancies, myRole, realRole, previewRole, setPreviewRole, previewing, loading: pregLoading, updatePregnancy, selectPregnancy } = usePregnancy();
+  const { user, logout, isAdmin, realIsAdmin, previewRole, setPreviewRole, previewing, loading: authLoading } = useAuth();
+  const { pregnancy, pregnancies, myRole, realRole, loading: pregLoading, updatePregnancy, selectPregnancy } = usePregnancy();
   const {
     diary, addDiaryEntry, deleteDiaryEntry,
     kicks, addKick, resetKicks,
@@ -835,18 +835,18 @@ export default function App(){
 
         {modal==="cfg"&&(
           <Mdl title="Configurações" onClose={()=>setModal(null)}>
-            {/* Ver como perfil — só admin da plataforma, para testar permissões */}
-            {isAdmin && realRole==="mae" && (
+            {/* Ver como perfil — só o admin master; lista TODOS os perfis */}
+            {realIsAdmin && (
               <div style={{marginBottom:18}}>
                 <div style={{fontSize:10,fontWeight:500,letterSpacing:1.5,textTransform:"uppercase",color:C.taupe,marginBottom:8}}>
-                  👁️ Ver como perfil (teste)
+                  👁️ Ver como perfil (master)
                 </div>
                 <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {[{v:null,l:"Mãe"},{v:"pai",l:"Pai"},{v:"doula",l:"Doula"},{v:"obstetra",l:"Obstetra"}].map(o=>{
+                  {[{v:null,l:"👑 Admin"},{v:"mae",l:"🤰 Mãe"},{v:"pai",l:"👨‍👩‍👧 Pai"},{v:"doula",l:"🤱 Doula"},{v:"obstetra",l:"👩‍⚕️ Obstetra"}].map(o=>{
                     const active=(previewRole??null)===o.v;
                     return(
                       <button key={o.l} onClick={()=>{setPreviewRole(o.v);setModal(null);}} style={{
-                        flex:"1 1 0",minWidth:64,padding:"8px 6px",borderRadius:10,fontSize:12,cursor:"pointer",
+                        flex:"1 1 40%",minWidth:90,padding:"9px 6px",borderRadius:10,fontSize:12,cursor:"pointer",
                         border:`1.5px solid ${active?C.rosa:C.bege}`,
                         background:active?`${C.rosa}22`:"transparent",
                         color:active?C.vinho:C.taupe,fontWeight:active?600:400,
@@ -854,7 +854,7 @@ export default function App(){
                     );
                   })}
                 </div>
-                <div style={{fontSize:11,color:C.taupe,marginTop:6}}>Simula o acesso de cada perfil para você testar as permissões.</div>
+                <div style={{fontSize:11,color:C.taupe,marginTop:6}}>Você assume o perfil escolhido — o app se comporta exatamente como ele. Toque na faixa do topo para voltar a Admin.</div>
               </div>
             )}
             <div style={{marginBottom:20,display:"flex",flexDirection:"column",gap:8}}>

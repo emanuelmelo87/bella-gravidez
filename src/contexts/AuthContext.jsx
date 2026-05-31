@@ -20,7 +20,10 @@ const BOOTSTRAP_ADMIN_EMAIL = "emanuel.melo87@gmail.com";
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [realIsAdmin, setRealIsAdmin] = useState(false);
+  // Admin pode "ver como" outro perfil (impersonação para teste):
+  // null = ele mesmo (admin). "mae"|"pai"|"doula"|"obstetra" = simula esse perfil.
+  const [previewRole, setPreviewRole] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,10 +59,11 @@ export function AuthProvider({ children }) {
             admin = a.exists() && a.data().active !== false;
           } catch { /* ignore */ }
         }
-        setIsAdmin(admin);
+        setRealIsAdmin(admin);
       } else {
         setUser(null);
-        setIsAdmin(false);
+        setRealIsAdmin(false);
+        setPreviewRole(null);
       }
       setLoading(false);
     });
@@ -92,8 +96,19 @@ export function AuthProvider({ children }) {
     await signOut(auth);
   }
 
+  // Identidade efetiva (considerando a impersonação do admin)
+  const previewing = realIsAdmin && previewRole != null;
+  // Quando simula um perfil que não é admin, perde os poderes de admin
+  const isAdmin = previewing ? false : realIsAdmin;
+
+  // Só o admin real pode trocar de perfil
+  const changePreview = (role) => { if (realIsAdmin) setPreviewRole(role); };
+
   return (
-    <AuthContext.Provider value={{ user, isAdmin, loading, loginWithGoogle, logout }}>
+    <AuthContext.Provider value={{
+      user, loading, loginWithGoogle, logout,
+      isAdmin, realIsAdmin, previewRole, previewing, setPreviewRole: changePreview,
+    }}>
       {children}
     </AuthContext.Provider>
   );

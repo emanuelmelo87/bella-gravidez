@@ -14,7 +14,7 @@ export const DEFAULT_PERMISSIONS = {
 };
 
 export function PregnancyProvider({ children }) {
-  const { user } = useAuth();
+  const { user, previewRole } = useAuth();
 
   // Gestação onde sou a mãe (dona)
   const [owned, setOwned] = useState(null);
@@ -94,11 +94,14 @@ export function PregnancyProvider({ children }) {
   const realRole = pregnancy?.role ?? null;
   const loading = loadingOwned || loadingMembers;
 
-  // "Ver como perfil" — só a dona pode simular outro perfil (teste de permissões)
-  const [previewRole, setPreviewRole] = useState(null);
-  const previewing = realRole === "mae" && previewRole && previewRole !== "mae";
-  const myRole = previewing ? previewRole : realRole;
-  const myPermissions = previewing ? DEFAULT_PERMISSIONS[previewRole] : (pregnancy?.permissions ?? null);
+  // Impersonação: o admin pode "ver como" outro perfil (estado vem do AuthContext)
+  const previewing = previewRole != null;
+  const myRole = previewing
+    ? (previewRole === "admin" ? realRole : previewRole)
+    : realRole;
+  const myPermissions = previewing
+    ? (previewRole === "mae" || previewRole === "admin" ? null : DEFAULT_PERMISSIONS[previewRole])
+    : (pregnancy?.permissions ?? null);
 
   async function createPregnancy({ lmp, dpp, babyNickname }) {
     if (!user) return;
@@ -133,7 +136,7 @@ export function PregnancyProvider({ children }) {
   return (
     <PregnancyContext.Provider value={{
       pregnancy, pregnancies, myRole, myPermissions, loading,
-      realRole, previewRole, setPreviewRole, previewing,
+      realRole, previewing,
       activeId, selectPregnancy,
       createPregnancy, updatePregnancy, can,
       DEFAULT_PERMISSIONS,
