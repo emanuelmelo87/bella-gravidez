@@ -3,7 +3,7 @@ import {
   onAuthStateChanged, signInWithPopup, signInWithRedirect,
   getRedirectResult, signOut,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp, increment } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase";
 
 // Detecta celular / navegador embarcado (onde popup falha)
@@ -33,11 +33,14 @@ export function AuthProvider({ children }) {
           name: firebaseUser.displayName,
           email: (firebaseUser.email || "").toLowerCase(),
           photoURL: firebaseUser.photoURL,
+          lastSeenAt: serverTimestamp(),
         };
+        // Conta 1 acesso por sessão (métrica de uso)
+        const counted = sessionStorage.getItem("bg-counted");
+        if (!counted) { profile.opens = increment(1); sessionStorage.setItem("bg-counted", "1"); }
         if (!snap.exists()) {
-          await setDoc(ref, { ...profile, createdAt: serverTimestamp() });
+          await setDoc(ref, { ...profile, opens: increment(1), createdAt: serverTimestamp() });
         } else {
-          // mantém nome/foto/email atualizados
           await setDoc(ref, profile, { merge: true });
         }
         setUser(firebaseUser);

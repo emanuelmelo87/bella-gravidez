@@ -510,13 +510,16 @@ function Health({appointments,addAppointment,deleteAppointment,medications,addMe
 }
 
 function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,addSong,deleteSong,photos,addPhoto,deletePhoto,week}){
-  const{can}=usePregnancy();
+  const{can,realRole}=usePregnancy();
+  const{user}=useAuth();
   const canLayette=can("layette","edit");
-  const canSongs=can("songs","edit");
   const canPhotos=can("photos","edit");
   const[sub,setSub]=useState("e");
   const[modal,setModal]=useState(null);
-  const[sT,setST]=useState("");const[sA,setSA]=useState("");
+  const[sT,setST]=useState("");const[sA,setSA]=useState("");const[sU,setSU]=useState("");
+  // Playlist é comunal: qualquer membro adiciona; apaga quem adicionou ou a mãe
+  const canDeleteSong=s=>realRole==="mae"||(s.addedBy&&s.addedBy===user?.uid);
+  const isYTPlaylist=u=>/[?&]list=/.test(u||"");
   const[pU,setPU]=useState("");const[pC,setPC]=useState("");const[upLoading,setUpLoading]=useState(false);
   const[ni,setNi]=useState("");const[nc,setNc]=useState("👕 Roupinhas");
   async function handlePhotoFile(e){
@@ -531,7 +534,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
   const done=layette.filter(i=>i.done).length;
   const D=({fn})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:13,padding:4}} onClick={fn}>✕</button>;
   async function addE(){if(!ni.trim())return;await addLayetteItem({cat:nc,n:ni.trim()});setNi("");setModal(null);}
-  async function addS(){if(!sT.trim())return;await addSong({title:sT.trim(),artist:sA.trim()});setModal(null);setST("");setSA("");}
+  async function addS(){if(!sT.trim()&&!sU.trim())return;await addSong({title:sT.trim(),artist:sA.trim(),url:sU.trim()});setModal(null);setST("");setSA("");setSU("");}
   async function addP(){if(!pU.trim())return;await addPhoto({url:pU.trim(),week:week||"—",caption:pC.trim()});setModal(null);setPU("");setPC("");}
   return(
     <div className="SCR">
@@ -567,19 +570,24 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
         </div>
       </>}
       {sub==="s"&&<>
-        {canSongs&&<button className="btnp fu" onClick={()=>setModal("s")}>+ Adicionar música</button>}
+        <button className="btnp fu" onClick={()=>setModal("s")}>+ Adicionar música ou playlist</button>
+        <div style={{fontSize:11,color:C.taupe,textAlign:"center",margin:"8px 0 2px"}}>🎶 Playlist comunal — todos podem incluir</div>
         <div className="card fu" style={{marginTop:12}}>
-          {songs.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>🎵</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Playlist vazia</div><div style={{fontSize:13,color:C.taupe}}>Crie uma playlist especial para o bebê</div></div>:
-          songs.map(s=>(
+          {songs.length===0?<div className="emp"><div style={{fontSize:36,marginBottom:8}}>🎵</div><div style={{fontFamily:SF,fontSize:18,color:C.vinho,marginBottom:4}}>Playlist vazia</div><div style={{fontSize:13,color:C.taupe}}>Cole links do YouTube (música ou playlist)</div></div>:
+          songs.map(s=>{
+            const pl=isYTPlaylist(s.url);
+            const label=s.title||(pl?"Playlist do YouTube":"Música");
+            return(
             <div key={s.id} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 0",borderBottom:`1px solid ${C.bege}33`}}>
-              <div style={{width:34,height:34,borderRadius:"50%",background:`${C.rosa}22`,border:`1.5px solid ${C.rosa}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>🎵</div>
-              <div style={{flex:1}}>
-                <div style={{fontSize:13,fontWeight:500,color:C.vinho}}>{s.title}</div>
-                {s.artist&&<div style={{fontSize:11,color:C.taupe}}>{s.artist}</div>}
+              <div style={{width:34,height:34,borderRadius:"50%",background:`${C.rosa}22`,border:`1.5px solid ${C.rosa}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>{pl?"🎶":"🎵"}</div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:500,color:C.vinho,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{label}{pl&&<span style={{fontSize:9,marginLeft:6,background:`${C.rosa}22`,color:C.vinho,borderRadius:10,padding:"1px 7px",verticalAlign:"middle"}}>PLAYLIST</span>}</div>
+                {(s.artist||s.addedByName)&&<div style={{fontSize:11,color:C.taupe}}>{s.artist||`por ${s.addedByName}`}</div>}
               </div>
-              {canSongs&&<button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16}} onClick={()=>deleteSong(s.id)}>🗑️</button>}
+              {s.url&&<a href={s.url} target="_blank" rel="noopener noreferrer" style={{textDecoration:"none",fontSize:18,flexShrink:0}}>▶️</a>}
+              {canDeleteSong(s)&&<button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16}} onClick={()=>deleteSong(s.id)}>🗑️</button>}
             </div>
-          ))}
+          );})}
         </div>
       </>}
       {sub==="p"&&(
@@ -603,10 +611,11 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
         <div className="fg"><div className="lbl">Item</div><input className="inp" placeholder="Nome do item..." value={ni} onChange={e=>setNi(e.target.value)}/></div>
         <button className="btnp" onClick={addE} disabled={!ni.trim()}>Adicionar</button>
       </Mdl>}
-      {modal==="s"&&<Mdl title="Nova música" sub="Para a playlist do bebê 🎵" onClose={()=>setModal(null)}>
-        <div className="fg"><div className="lbl">Título</div><input className="inp" placeholder="You Are My Sunshine..." value={sT} onChange={e=>setST(e.target.value)}/></div>
-        <div className="fg"><div className="lbl">Artista</div><input className="inp" placeholder="Nome do artista..." value={sA} onChange={e=>setSA(e.target.value)}/></div>
-        <button className="btnp" onClick={addS} disabled={!sT.trim()}>Adicionar</button>
+      {modal==="s"&&<Mdl title="Adicionar à playlist" sub="Cole um link do YouTube — música ou playlist 🎶" onClose={()=>setModal(null)}>
+        <div className="fg"><div className="lbl">Link do YouTube</div><input className="inp" placeholder="https://youtube.com/playlist?list=... ou /watch?v=..." value={sU} onChange={e=>setSU(e.target.value)}/></div>
+        <div className="fg"><div className="lbl">Título (opcional)</div><input className="inp" placeholder="Ex: Canções de ninar, You Are My Sunshine..." value={sT} onChange={e=>setST(e.target.value)}/></div>
+        <div className="fg"><div className="lbl">Artista / nota (opcional)</div><input className="inp" placeholder="Nome do artista ou observação..." value={sA} onChange={e=>setSA(e.target.value)}/></div>
+        <button className="btnp" onClick={addS} disabled={!sT.trim()&&!sU.trim()}>Adicionar</button>
       </Mdl>}
       {modal==="p"&&<Mdl title="Nova foto" sub="Tire uma foto ou escolha da galeria" onClose={()=>setModal(null)}>
         {/* Upload da câmera/galeria (mobile abre a câmera) */}

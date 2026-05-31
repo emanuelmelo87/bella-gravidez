@@ -3,7 +3,7 @@ import {
   collection, doc, onSnapshot, addDoc, setDoc, updateDoc,
   deleteDoc, query, orderBy, serverTimestamp, writeBatch, getDocs, increment,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 import { usePregnancy } from "./PregnancyContext";
 
 const DataContext = createContext(null);
@@ -240,8 +240,13 @@ export function DataProvider({ children }) {
   }
 
   // ─── CRUD Songs ──────────────────────────────────────────────────────
-  async function addSong({ title, artist }) {
-    await addDoc(collection(db, "pregnancies", pid, "songs"), { title, artist: artist ?? "" });
+  async function addSong({ title, artist, url }) {
+    await addDoc(collection(db, "pregnancies", pid, "songs"), {
+      title: title ?? "", artist: artist ?? "", url: url ?? "",
+      addedBy: auth.currentUser?.uid ?? null,
+      addedByName: auth.currentUser?.displayName ?? "",
+      createdAt: serverTimestamp(),
+    });
   }
   async function deleteSong(id) {
     await deleteDoc(doc(db, "pregnancies", pid, "songs", id));

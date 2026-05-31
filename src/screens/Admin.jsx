@@ -40,6 +40,7 @@ export default function Admin() {
   const [admins, setAdmins] = useState([]);
   const [milestones, setMilestones] = useState([]);
   const [pregnancies, setPregnancies] = useState([]);
+  const [users, setUsers] = useState([]);
   const [metrics, setMetrics] = useState({ pregnancies: 0, users: 0, members: 0 });
 
   // Forms
@@ -116,7 +117,10 @@ export default function Admin() {
     // Usuários
     const unsubUsers = onSnapshot(
       collection(db, "users"),
-      snap => setMetrics(m => ({ ...m, users: snap.size }))
+      snap => {
+        setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setMetrics(m => ({ ...m, users: snap.size }));
+      }
     );
 
     return () => {
@@ -229,6 +233,14 @@ export default function Admin() {
     { id: "admins",      l: "👑 Admins" },
   ];
 
+  // ── Métricas de uso (derivadas dos usuários) ──
+  const now = Date.now();
+  const ms = (d) => { const t = d?.toDate ? d.toDate().getTime() : (d ? new Date(d).getTime() : 0); return t; };
+  const totalOpens = users.reduce((a, u) => a + (u.opens || 0), 0);
+  const activeToday = users.filter(u => now - ms(u.lastSeenAt) < 864e5).length;
+  const active7d   = users.filter(u => now - ms(u.lastSeenAt) < 7 * 864e5).length;
+  const recentUsers = [...users].sort((a, b) => ms(b.lastSeenAt) - ms(a.lastSeenAt)).slice(0, 8);
+
   return (
     <div style={{ minHeight: "100dvh", background: C.bg, fontFamily: "'DM Sans',sans-serif" }}>
       {/* Header */}
@@ -269,11 +281,14 @@ export default function Admin() {
         {/* ── MÉTRICAS ── */}
         {tab === "metrics" && (
           <div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 12, marginBottom: 20 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 12, marginBottom: 20 }}>
               {[
-                { n: metrics.pregnancies, l: "Gestações",  ic: "🤰" },
-                { n: metrics.users,       l: "Usuários",   ic: "👤" },
-                { n: metrics.members,     l: "Membros",    ic: "👥" },
+                { n: metrics.pregnancies, l: "Gestações",     ic: "🤰" },
+                { n: metrics.users,       l: "Usuários",      ic: "👤" },
+                { n: metrics.members,     l: "Membros",       ic: "👥" },
+                { n: totalOpens,          l: "Acessos",       ic: "📲" },
+                { n: activeToday,         l: "Ativos hoje",   ic: "🟢" },
+                { n: active7d,            l: "Ativos 7 dias", ic: "📈" },
               ].map((m, i) => (
                 <div key={i} style={{
                   background: "white", borderRadius: 16, padding: 16, textAlign: "center",
@@ -299,6 +314,27 @@ export default function Admin() {
                     <div style={{ fontSize: 11, color: C.taupe }}>DPP: {p.dpp ?? "—"}</div>
                   </div>
                   <div style={{ fontSize: 11, color: C.taupe }}>{fmtDate(p.createdAt)}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "white", borderRadius: 16, padding: 16, border: `1px solid ${C.bege}`, marginTop: 16 }}>
+              <div style={{ fontFamily: SF, fontSize: 18, color: C.vinho, marginBottom: 12 }}>Usuários recentes</div>
+              {recentUsers.map(u => (
+                <div key={u.id} style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "10px 0", borderBottom: `1px solid ${C.bege}44`,
+                }}>
+                  {u.photoURL
+                    ? <img src={u.photoURL} alt="" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                    : <div style={{ width: 32, height: 32, borderRadius: "50%", background: `${C.rosa}33`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>👤</div>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: C.vinho, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name || u.email}</div>
+                    <div style={{ fontSize: 11, color: C.taupe }}>{u.opens || 0} acesso(s)</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: C.taupe, textAlign: "right" }}>
+                    {u.lastSeenAt ? fmtDate(u.lastSeenAt) : "—"}
+                  </div>
                 </div>
               ))}
             </div>
