@@ -179,14 +179,6 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
 }
 
 /* Telas grandes: container ainda mais amplo */
-/* Grade em colunas (Início, Dicas) só no desktop de verdade — em
-   celular/tablet tudo fica em coluna única, com a MESMA largura */
-@media(min-width:1024px){
-  .SCR.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));
-            gap:18px;align-items:start}
-  .SCR.grid>.btnp,.SCR.grid>.emp,.SCR.grid>.ndb{grid-column:1/-1}
-}
-
 @media(min-width:1200px){
   .R{max-width:1080px}
   .SCR{max-width:900px}
