@@ -175,11 +175,14 @@ export function DataProvider({ children }) {
     localStorage.setItem("bg-migrated-" + pregnancyId, "1");
   }
 
+  const me = () => auth.currentUser?.uid ?? null;
+
   // ─── CRUD Diary ──────────────────────────────────────────────────────
-  async function addDiaryEntry({ mood, text, week }) {
+  async function addDiaryEntry({ mood, text, week, visibleTo }) {
     await addDoc(collection(db, "pregnancies", pid, "diary"), {
       date: tod(), week: week ?? "—", mood: mood ?? null,
-      text: text ?? "", createdAt: serverTimestamp(),
+      text: text ?? "", visibleTo: visibleTo ?? "all", createdBy: me(),
+      createdAt: serverTimestamp(),
     });
   }
   async function deleteDiaryEntry(id) {
@@ -198,9 +201,10 @@ export function DataProvider({ children }) {
   }
 
   // ─── CRUD Appointments ───────────────────────────────────────────────
-  async function addAppointment({ date, doctor, type, notes }) {
+  async function addAppointment({ date, doctor, type, notes, visibleTo }) {
     await addDoc(collection(db, "pregnancies", pid, "appointments"), {
-      date, doctor, type, notes: notes ?? "", createdAt: serverTimestamp(),
+      date, doctor, type, notes: notes ?? "", visibleTo: visibleTo ?? "all", createdBy: me(),
+      createdAt: serverTimestamp(),
     });
   }
   async function deleteAppointment(id) {
@@ -208,9 +212,10 @@ export function DataProvider({ children }) {
   }
 
   // ─── CRUD Medications ────────────────────────────────────────────────
-  async function addMedication({ name, dose, time }) {
+  async function addMedication({ name, dose, time, visibleTo }) {
     await addDoc(collection(db, "pregnancies", pid, "medications"), {
-      name, dose: dose ?? "", time: time ?? "", createdAt: serverTimestamp(),
+      name, dose: dose ?? "", time: time ?? "", visibleTo: visibleTo ?? "all", createdBy: me(),
+      createdAt: serverTimestamp(),
     });
   }
   async function deleteMedication(id) {
@@ -218,9 +223,10 @@ export function DataProvider({ children }) {
   }
 
   // ─── CRUD Symptoms ───────────────────────────────────────────────────
-  async function addSymptom({ items, notes }) {
+  async function addSymptom({ items, notes, visibleTo }) {
     await addDoc(collection(db, "pregnancies", pid, "symptoms"), {
-      date: tod(), items: items ?? [], notes: notes ?? "", createdAt: serverTimestamp(),
+      date: tod(), items: items ?? [], notes: notes ?? "", visibleTo: visibleTo ?? "all", createdBy: me(),
+      createdAt: serverTimestamp(),
     });
   }
   async function deleteSymptom(id) {
@@ -253,9 +259,10 @@ export function DataProvider({ children }) {
   }
 
   // ─── CRUD Photos ─────────────────────────────────────────────────────
-  async function addPhoto({ url, week, caption }) {
+  async function addPhoto({ url, week, caption, visibleTo }) {
     await addDoc(collection(db, "pregnancies", pid, "photos"), {
       url, week: week ?? "—", caption: caption ?? "", date: tod(),
+      visibleTo: visibleTo ?? "all", createdBy: me(),
     });
   }
   async function deletePhoto(id) {

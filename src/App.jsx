@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { usePregnancy } from "./contexts/PregnancyContext";
 import { useData } from "./contexts/DataContext";
+import { useMembers } from "./contexts/MembersContext";
 import Login from "./screens/Login";
 import Onboarding from "./screens/Onboarding";
 import Members from "./screens/Members";
@@ -128,6 +129,47 @@ function usePersisted(key,def){
   const[v,sv]=useState(()=>{try{const s=localStorage.getItem(key);return s!=null?JSON.parse(s):def;}catch{return def;}});
   const set=val=>sv(prev=>{const next=typeof val==="function"?val(prev):val;try{localStorage.setItem(key,JSON.stringify(next));}catch{}return next;});
   return[v,set];
+}
+
+// Visibilidade por item: item.visibleTo === "all"/ausente (todos) ou array de uids
+function canSeeItem(item, { uid, role, isAdmin }){
+  const v = item?.visibleTo;
+  if (!v || v === "all") return true;
+  if (isAdmin) return true;
+  if (role === "mae") return true;
+  if (item.createdBy && item.createdBy === uid) return true;
+  return Array.isArray(v) && uid && v.includes(uid);
+}
+
+// Seletor "Quem pode ver?" (por pessoa) — usado pela mãe ao adicionar
+function VisibilityPicker({ value, onChange }){
+  const { members } = useMembers();
+  const active = members.filter(m=>m.status==="active");
+  const all = value==="all" || value==null;
+  const sel = Array.isArray(value) ? value : [];
+  function toggleAll(){ onChange("all"); }
+  function toggle(uid){
+    let next = all ? [] : [...sel];
+    next = next.includes(uid) ? next.filter(x=>x!==uid) : [...next, uid];
+    onChange(next.length ? next : "all");
+  }
+  return (
+    <div className="fg">
+      <div className="lbl">👁️ Quem pode ver?</div>
+      <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+        <button type="button" className={`chip ${all?"S":""}`} onClick={toggleAll}>Todos</button>
+        {active.length===0 && !all && <span style={{fontSize:11,color:"#ab9d95",alignSelf:"center"}}>Convide membros para escolher</span>}
+        {active.map(m=>(
+          <button type="button" key={m.id} className={`chip ${!all&&sel.includes(m.userId)?"S":""}`} onClick={()=>toggle(m.userId)}>
+            {m.label || m.userName || m.userEmail} · {m.role}
+          </button>
+        ))}
+      </div>
+      <div style={{fontSize:11,color:"#ab9d95",marginTop:6}}>
+        {all ? "Visível para todos que têm acesso a esta seção." : "Visível só para você e as pessoas marcadas."}
+      </div>
+    </div>
+  );
 }
 
 function Mdl({title,sub,onClose,children}){
@@ -283,16 +325,17 @@ function Home({preg,week,onCfg}){
   );
 }
 
-function Diary({entries,addEntry,deleteEntry,week}){
+function Diary({entries,addEntry,deleteEntry,week,canSetVisibility}){
   const{can}=usePregnancy();
   const canEdit=can("diary","edit");
   const[open,setOpen]=useState(false);
   const[mood,setMood]=useState(null);
   const[text,setText]=useState("");
+  const[vis,setVis]=useState("all");
   async function add(){
     if(!text.trim()&&!mood)return;
-    await addEntry({mood,text:text.trim(),week});
-    setOpen(false);setMood(null);setText("");
+    await addEntry({mood,text:text.trim(),week,visibleTo:vis});
+    setOpen(false);setMood(null);setText("");setVis("all");
   }
   const Btn=({onClick})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16,padding:4}} onClick={onClick}>🗑️</button>;
   return(
@@ -339,6 +382,7 @@ function Diary({entries,addEntry,deleteEntry,week}){
             <textarea className="inp" rows={4} placeholder="Como foi seu dia? Como você está se sentindo?"
               value={text} onChange={e=>setText(e.target.value)} style={{resize:"vertical",lineHeight:1.6}}/>
           </div>
+          {canSetVisibility&&<VisibilityPicker value={vis} onChange={setVis}/>}
           <button className="btnp" onClick={add} disabled={!text.trim()&&!mood}>Salvar</button>
         </Mdl>
       )}
@@ -421,19 +465,21 @@ function Baby({week}){
   );
 }
 
-function Health({appointments,addAppointment,deleteAppointment,medications,addMedication,deleteMedication,symptoms,addSymptom,deleteSymptom}){
+function Health({appointments,addAppointment,deleteAppointment,medications,addMedication,deleteMedication,symptoms,addSymptom,deleteSymptom,canSetVisibility}){
   const{can}=usePregnancy();
   const canEdit=can("health","edit");
   const[sub,setSub]=useState("c");
-  const[modal,setModal]=useState(null);
+  const[modal,setModalRaw]=useState(null);
+  const[vis,setVis]=useState("all");
+  const setModal=m=>{ if(m)setVis("all"); setModalRaw(m); };
   const[cDt,setCDt]=useState(tod());const[cDc,setCDc]=useState("");const[cTp,setCTp]=useState(CTYPES[0]);const[cNt,setCNt]=useState("");
   const[mN,setMN]=useState("");const[mD,setMD]=useState("");const[mT,setMT]=useState("");
   const[sCh,setSCh]=useState([]);const[sNt,setSNt]=useState("");
   const tg=c=>setSCh(p=>p.includes(c)?p.filter(x=>x!==c):[...p,c]);
   const D=({fn})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:16,padding:4}} onClick={fn}>🗑️</button>;
-  async function addC(){if(!cDc.trim())return;await addAppointment({date:cDt,doctor:cDc,type:cTp,notes:cNt});setModal(null);setCDc("");setCNt("");}
-  async function addM(){if(!mN.trim())return;await addMedication({name:mN,dose:mD,time:mT});setModal(null);setMN("");setMD("");setMT("");}
-  async function addS(){if(!sCh.length&&!sNt.trim())return;await addSymptom({items:sCh,notes:sNt});setModal(null);setSCh([]);setSNt("");}
+  async function addC(){if(!cDc.trim())return;await addAppointment({date:cDt,doctor:cDc,type:cTp,notes:cNt,visibleTo:vis});setModal(null);setCDc("");setCNt("");}
+  async function addM(){if(!mN.trim())return;await addMedication({name:mN,dose:mD,time:mT,visibleTo:vis});setModal(null);setMN("");setMD("");setMT("");}
+  async function addS(){if(!sCh.length&&!sNt.trim())return;await addSymptom({items:sCh,notes:sNt,visibleTo:vis});setModal(null);setSCh([]);setSNt("");}
   return(
     <div className="SCR">
       <div className="stabs fu">
@@ -490,12 +536,14 @@ function Health({appointments,addAppointment,deleteAppointment,medications,addMe
         <div className="fg"><div className="lbl">Médico</div><input className="inp" placeholder="Dra. Ana — Obstetra" value={cDc} onChange={e=>setCDc(e.target.value)}/></div>
         <div className="fg"><div className="lbl">Tipo</div><select className="inp" value={cTp} onChange={e=>setCTp(e.target.value)}>{CTYPES.map(t=><option key={t}>{t}</option>)}</select></div>
         <div className="fg"><div className="lbl">Notas</div><textarea className="inp" rows={3} placeholder="Resultados, observações..." value={cNt} onChange={e=>setCNt(e.target.value)} style={{resize:"vertical"}}/></div>
+        {canSetVisibility&&<VisibilityPicker value={vis} onChange={setVis}/>}
         <button className="btnp" onClick={addC} disabled={!cDc.trim()}>Salvar consulta</button>
       </Mdl>}
       {modal==="m"&&<Mdl title="Novo medicamento" sub="Vitaminas, suplementos e remédios prescritos" onClose={()=>setModal(null)}>
         <div className="fg"><div className="lbl">Nome</div><input className="inp" placeholder="Ácido fólico, Ferro..." value={mN} onChange={e=>setMN(e.target.value)}/></div>
         <div className="fg"><div className="lbl">Dose</div><input className="inp" placeholder="1 comprimido, 5mg..." value={mD} onChange={e=>setMD(e.target.value)}/></div>
         <div className="fg"><div className="lbl">Horário</div><input className="inp" placeholder="Manhã, 08h..." value={mT} onChange={e=>setMT(e.target.value)}/></div>
+        {canSetVisibility&&<VisibilityPicker value={vis} onChange={setVis}/>}
         <button className="btnp" onClick={addM} disabled={!mN.trim()}>Salvar</button>
       </Mdl>}
       {modal==="s"&&<Mdl title="Registrar sintomas" sub="O que você está sentindo hoje?" onClose={()=>setModal(null)}>
@@ -503,13 +551,14 @@ function Health({appointments,addAppointment,deleteAppointment,medications,addMe
           {SYMPTOMS.map(s=><button key={s} className={`chip ${sCh.includes(s)?"S":""}`} onClick={()=>tg(s)}>{s}</button>)}
         </div>
         <div className="fg"><div className="lbl">Observações</div><textarea className="inp" rows={3} placeholder="Intensidade, horário, o que ajudou..." value={sNt} onChange={e=>setSNt(e.target.value)} style={{resize:"vertical"}}/></div>
+        {canSetVisibility&&<VisibilityPicker value={vis} onChange={setVis}/>}
         <button className="btnp" onClick={addS} disabled={!sCh.length&&!sNt.trim()}>Salvar</button>
       </Mdl>}
     </div>
   );
 }
 
-function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,addSong,deleteSong,photos,addPhoto,deletePhoto,week}){
+function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,addSong,deleteSong,photos,addPhoto,deletePhoto,week,canSetVisibility}){
   const{can,realRole}=usePregnancy();
   const{user}=useAuth();
   const canLayette=can("layette","edit");
@@ -520,7 +569,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
   // Playlist é comunal: qualquer membro adiciona; apaga quem adicionou ou a mãe
   const canDeleteSong=s=>realRole==="mae"||(s.addedBy&&s.addedBy===user?.uid);
   const isYTPlaylist=u=>/[?&]list=/.test(u||"");
-  const[pU,setPU]=useState("");const[pC,setPC]=useState("");const[upLoading,setUpLoading]=useState(false);
+  const[pU,setPU]=useState("");const[pC,setPC]=useState("");const[upLoading,setUpLoading]=useState(false);const[pVis,setPVis]=useState("all");
   const[ni,setNi]=useState("");const[nc,setNc]=useState("👕 Roupinhas");
   async function handlePhotoFile(e){
     const file=e.target.files?.[0];
@@ -535,7 +584,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
   const D=({fn})=><button style={{background:"none",border:"none",cursor:"pointer",color:C.taupe,fontSize:13,padding:4}} onClick={fn}>✕</button>;
   async function addE(){if(!ni.trim())return;await addLayetteItem({cat:nc,n:ni.trim()});setNi("");setModal(null);}
   async function addS(){if(!sT.trim()&&!sU.trim())return;await addSong({title:sT.trim(),artist:sA.trim(),url:sU.trim()});setModal(null);setST("");setSA("");setSU("");}
-  async function addP(){if(!pU.trim())return;await addPhoto({url:pU.trim(),week:week||"—",caption:pC.trim()});setModal(null);setPU("");setPC("");}
+  async function addP(){if(!pU.trim())return;await addPhoto({url:pU.trim(),week:week||"—",caption:pC.trim(),visibleTo:pVis});setModal(null);setPU("");setPC("");setPVis("all");}
   return(
     <div className="SCR">
       <div className="stabs fu">
@@ -643,6 +692,7 @@ function More({layette,addLayetteItem,toggleLayetteItem,deleteLayetteItem,songs,
 
         <div className="fg"><div className="lbl">Colar link (Google Fotos, Drive)</div><input className="inp" placeholder="https://..." value={pU.startsWith("data:")?"":pU} onChange={e=>setPU(e.target.value)}/></div>
         <div className="fg"><div className="lbl">Legenda</div><input className="inp" placeholder="28 semanas! Barrigão crescendo..." value={pC} onChange={e=>setPC(e.target.value)}/></div>
+        {canSetVisibility&&<VisibilityPicker value={pVis} onChange={setPVis}/>}
         <button className="btnp" onClick={addP} disabled={!pU.trim()||upLoading}>Salvar</button>
       </Mdl>}
     </div>
@@ -715,6 +765,13 @@ export default function App(){
     {id:"more",         ic:"🗂️", l:"Mais"},
   ];
 
+  // Filtro de visibilidade por item (por pessoa)
+  const visCtx = { uid: user?.uid, role: myRole, isAdmin };
+  const see = arr => (arr || []).filter(it => canSeeItem(it, visCtx));
+  const fDiary = see(diary), fAppts = see(appointments), fMeds = see(medications), fSyms = see(symptoms), fPhotos = see(photos);
+  // Só a mãe (de verdade, sem impersonar) define quem vê cada item
+  const canSetVisibility = realRole === "mae" && !previewing;
+
   return(
     <>
       <style>{CSS}</style>
@@ -783,22 +840,23 @@ export default function App(){
         </div>
 
         {tab==="home"&&<Home preg={pregnancy} week={week} onCfg={()=>setModal("cfg")}/>}
-        {tab==="diary"&&<Diary entries={diary} addEntry={addDiaryEntry} deleteEntry={deleteDiaryEntry} week={week}/>}
+        {tab==="diary"&&<Diary entries={fDiary} addEntry={addDiaryEntry} deleteEntry={deleteDiaryEntry} week={week} canSetVisibility={canSetVisibility}/>}
         {tab==="baby"&&<Baby week={week}/>}
         {tab==="contractions"&&<Contractions/>}
         {tab==="tips"&&<Tips/>}
         {tab==="birthplan"&&<Suspense fallback={<Loading/>}><BirthPlan/></Suspense>}
         {tab==="birth"&&<Suspense fallback={<Loading/>}><BirthTracker/></Suspense>}
         {tab==="health"&&<Health
-          appointments={appointments} addAppointment={addAppointment} deleteAppointment={deleteAppointment}
-          medications={medications} addMedication={addMedication} deleteMedication={deleteMedication}
-          symptoms={symptoms} addSymptom={addSymptom} deleteSymptom={deleteSymptom}
+          appointments={fAppts} addAppointment={addAppointment} deleteAppointment={deleteAppointment}
+          medications={fMeds} addMedication={addMedication} deleteMedication={deleteMedication}
+          symptoms={fSyms} addSymptom={addSymptom} deleteSymptom={deleteSymptom}
+          canSetVisibility={canSetVisibility}
         />}
         {tab==="more"&&<More
           layette={layette} addLayetteItem={addLayetteItem} toggleLayetteItem={toggleLayetteItem} deleteLayetteItem={deleteLayetteItem}
           songs={songs} addSong={addSong} deleteSong={deleteSong}
-          photos={photos} addPhoto={addPhoto} deletePhoto={deletePhoto}
-          week={week}
+          photos={fPhotos} addPhoto={addPhoto} deletePhoto={deletePhoto}
+          week={week} canSetVisibility={canSetVisibility}
         />}
 
         <div className="NAV">
