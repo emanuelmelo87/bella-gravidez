@@ -59,8 +59,9 @@ export function buildCSS(C) {
   return `
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100%}
 body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font-smoothing:antialiased}
-.R{max-width:480px;margin:0 auto;min-height:100dvh;background:${C.bg};position:relative}
+.R{width:100%;max-width:480px;margin:0 auto;min-height:100dvh;background:${C.bg};position:relative;overflow-x:hidden}
 @media(min-width:481px){.R{border-left:1px solid ${C.bege};border-right:1px solid ${C.bege};box-shadow:0 0 60px rgba(78,43,83,.1)}}
 .HDR{background:${C.vinho};position:relative;overflow:hidden}
 .HDR::after{content:'';position:absolute;bottom:-1px;left:-5%;width:110%;height:18px;background:${C.bg};border-radius:50% 50% 0 0/100% 100% 0 0}
@@ -76,7 +77,9 @@ body{font-family:'DM Sans','Segoe UI',sans-serif;background:${C.bg};-webkit-font
 .wmeta{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:5px}
 .tribadge{font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;padding:3px 11px;border-radius:20px;border:1px solid}
 .wdays{font-size:12px;color:rgba(238,209,184,.5)}
-.SCR{padding:0 16px 100px;display:flex;flex-direction:column;gap:14px}
+.SCR{padding:0 16px 100px;display:flex;flex-direction:column;gap:14px;width:100%}
+.SCR>*{min-width:0;max-width:100%}
+.card{overflow-wrap:break-word}
 .card{background:white;border-radius:20px;padding:18px;box-shadow:0 2px 14px rgba(78,43,83,.07);border:1px solid rgba(195,138,151,.08)}
 .ctit{font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:400;color:${C.vinho};margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .pbar{height:7px;background:${C.bege};border-radius:99px;overflow:hidden;margin:6px 0}
