@@ -25,6 +25,8 @@ const DEFAULT_MILESTONES = [
   { key: "custom",               label: "Evento personalizado",    icon: "✏️", order: 10, repeatable: true },
 ];
 
+function ms(d) { return d?.toDate ? d.toDate().getTime() : (d ? new Date(d).getTime() : 0); }
+
 function fmtDate(ts) {
   if (!ts) return "—";
   const d = ts.toDate ? ts.toDate() : new Date(ts);
@@ -261,7 +263,6 @@ export default function Admin() {
 
   // ── Métricas de uso (derivadas dos usuários) ──
   const now = Date.now();
-  const ms = (d) => { const t = d?.toDate ? d.toDate().getTime() : (d ? new Date(d).getTime() : 0); return t; };
   const totalOpens = users.reduce((a, u) => a + (u.opens || 0), 0);
   const activeToday = users.filter(u => now - ms(u.lastSeenAt) < 864e5).length;
   const active7d   = users.filter(u => now - ms(u.lastSeenAt) < 7 * 864e5).length;
