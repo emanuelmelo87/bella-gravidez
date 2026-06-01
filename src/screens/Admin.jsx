@@ -45,6 +45,7 @@ export default function Admin() {
 
   // Forms
   const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   const [newMs, setNewMs] = useState({ label: "", icon: "✨", repeatable: false });
   const [editMs, setEditMs] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -195,6 +196,25 @@ export default function Admin() {
     await deleteDoc(doc(db, "platformAdmins", id));
   }
 
+  const isUserAdmin = (u) =>
+    (u.email || "").toLowerCase() === BOOTSTRAP_EMAIL ||
+    admins.some(a => a.id === u.id && a.active !== false);
+
+  async function toggleUserAdmin(u) {
+    if (u.id === user.uid) return; // não mexe em si mesmo
+    if ((u.email || "").toLowerCase() === BOOTSTRAP_EMAIL) return; // dono é fixo
+    try {
+      if (isUserAdmin(u)) {
+        await deleteDoc(doc(db, "platformAdmins", u.id));
+      } else {
+        await setDoc(doc(db, "platformAdmins", u.id), {
+          email: (u.email || "").toLowerCase(), uid: u.id, name: u.name ?? "",
+          addedBy: user.uid, addedByEmail: user.email, addedAt: serverTimestamp(), active: true,
+        });
+      }
+    } catch (e) { alert("Erro: " + e.message); }
+  }
+
   async function addMilestone() {
     if (!newMs.label.trim()) return;
     setSaving(true);
@@ -228,10 +248,16 @@ export default function Admin() {
 
   const TABS = [
     { id: "metrics",     l: "📊 Métricas" },
+    { id: "users",       l: "👤 Usuários" },
     { id: "pregnancies", l: "🤰 Gestações" },
     { id: "milestones",  l: "🌟 Marcos" },
     { id: "admins",      l: "👑 Admins" },
   ];
+
+  const userQ = userSearch.trim().toLowerCase();
+  const filteredUsers = [...users]
+    .filter(u => !userQ || (u.name || "").toLowerCase().includes(userQ) || (u.email || "").toLowerCase().includes(userQ))
+    .sort((a, b) => ms(b.lastSeenAt) - ms(a.lastSeenAt));
 
   // ── Métricas de uso (derivadas dos usuários) ──
   const now = Date.now();
@@ -333,6 +359,78 @@ export default function Admin() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── USUÁRIOS ── */}
+        {tab === "users" && (
+          <div>
+            <div style={{ background: "white", borderRadius: 16, padding: 16, border: `1px solid ${C.bege}`, marginBottom: 12 }}>
+              <div style={{ fontFamily: SF, fontSize: 20, color: C.vinho, marginBottom: 4 }}>
+                {users.length} usuários cadastrados
+              </div>
+              <div style={{ fontSize: 12, color: C.taupe, marginBottom: 12 }}>
+                Todos com acesso ao sistema. Você pode tornar alguém admin da plataforma.
+              </div>
+              <input
+                placeholder="🔍 Buscar por nome ou email..."
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+                style={{ width: "100%", padding: "11px 14px", border: `1.5px solid ${C.bege}`, borderRadius: 12, fontFamily: "'DM Sans',sans-serif", fontSize: 14, boxSizing: "border-box" }}
+              />
+            </div>
+
+            <div style={{ background: "white", borderRadius: 16, padding: 16, border: `1px solid ${C.bege}` }}>
+              {filteredUsers.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 24, color: C.taupe }}>Nenhum usuário encontrado</div>
+              ) : filteredUsers.map(u => {
+                const admin = isUserAdmin(u);
+                const isBoot = (u.email || "").toLowerCase() === BOOTSTRAP_EMAIL;
+                const isMe = u.id === user.uid;
+                return (
+                  <div key={u.id} style={{
+                    display: "flex", alignItems: "center", gap: 12, padding: "12px 0",
+                    borderBottom: `1px solid ${C.bege}44`,
+                  }}>
+                    {u.photoURL
+                      ? <img src={u.photoURL} alt="" style={{ width: 40, height: 40, borderRadius: "50%" }} />
+                      : <div style={{ width: 40, height: 40, borderRadius: "50%", background: `${C.rosa}33`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16 }}>👤</div>}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: C.vinho, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {u.name || "—"} {admin && <span style={{ fontSize: 9, background: `${C.vinho}`, color: "white", borderRadius: 10, padding: "1px 7px", marginLeft: 4 }}>ADMIN</span>}
+                      </div>
+                      <div style={{ fontSize: 11, color: C.taupe, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</div>
+                      <div style={{ fontSize: 10, color: C.taupe, marginTop: 2 }}>
+                        {u.opens || 0} acesso(s) · visto {u.lastSeenAt ? fmtDate(u.lastSeenAt) : "—"}
+                      </div>
+                    </div>
+                    {isBoot ? (
+                      <span style={{ fontSize: 10, color: C.verde, fontWeight: 600 }}>DONO</span>
+                    ) : isMe ? (
+                      <span style={{ fontSize: 10, color: C.verde, fontWeight: 600 }}>Você</span>
+                    ) : (
+                      <button onClick={() => toggleUserAdmin(u)} style={{
+                        padding: "6px 12px", borderRadius: 10, cursor: "pointer", fontSize: 11, whiteSpace: "nowrap",
+                        border: `1.5px solid ${admin ? "#ef4444" : C.bege}`,
+                        background: admin ? "transparent" : `${C.vinho}`,
+                        color: admin ? "#ef4444" : "white",
+                      }}>
+                        {admin ? "Remover admin" : "Tornar admin"}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{
+              background: `${C.bege}33`, border: `1px solid ${C.bege}`, borderRadius: 12,
+              padding: "10px 14px", fontSize: 12, color: C.vinho, marginTop: 12, lineHeight: 1.5,
+            }}>
+              ℹ️ Os papéis <strong>Mãe / Pai / Doula / Obstetra</strong> e as permissões por seção são
+              definidos <strong>dentro de cada gestação</strong> (pela mãe, na tela Membros). Isso preserva
+              a privacidade — o admin não acessa os dados das gestações.
             </div>
           </div>
         )}
