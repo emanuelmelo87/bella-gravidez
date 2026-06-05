@@ -756,11 +756,11 @@ export default function App(){
   const SECTIONS=[
     {id:"home",         ic:"🏠", img:"/icon-home.png", l:"Início",        primary:true},
     {id:"diary",        ic:"📖", img:"/icon-diary.png", l:"Diário",         primary:true},
-    {id:"contractions", ic:"⏱️", l:"Contrações",     primary:true},
-    {id:"birth",        ic:"🌟", l:"Parto",          primary:true},
-    {id:"baby",         ic:"👶", l:"Bebê"},
+    {id:"contractions", ic:"⏱️", img:"/icon-contractions.png", l:"Contrações",     primary:true},
+    {id:"birth",        ic:"🌟", img:"/icon-birth.png", l:"Parto",          primary:true},
+    {id:"baby",         ic:"👶", img:"/icon-baby.png", l:"Bebê"},
     {id:"birthplan",    ic:"📋", l:"Plano de Parto"},
-    {id:"health",       ic:"🩺", l:"Saúde"},
+    {id:"health",       ic:"🩺", img:"/icon-health.png", l:"Saúde"},
     {id:"tips",         ic:"💡", l:"Dicas"},
     {id:"more",         ic:"🗂️", l:"Mais"},
   ];
