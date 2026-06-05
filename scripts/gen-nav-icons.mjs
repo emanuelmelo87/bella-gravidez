@@ -30,6 +30,18 @@ const ICONS = {
     <circle cx="12" cy="12" r="9"/>
     <line x1="12" y1="7.5" x2="12" y2="16.5"/>
     <line x1="7.5" y1="12" x2="16.5" y2="12"/>`,
+  // Mais — veja mais (três pontinhos)
+  "icon-more": `
+    <g fill="${ROSA}" stroke="none">
+      <circle cx="5.5" cy="12" r="1.8"/>
+      <circle cx="12" cy="12" r="1.8"/>
+      <circle cx="18.5" cy="12" r="1.8"/>
+    </g>`,
+  // Dicas — lâmpada de mesa (abajur)
+  "icon-tips": `
+    <path d="M8 4 H16 L17.5 10 H6.5 Z"/>
+    <line x1="12" y1="10" x2="12" y2="19"/>
+    <path d="M9 19 H15 L16.5 21 H7.5 Z"/>`,
 };
 
 for (const [name, inner] of Object.entries(ICONS)) {

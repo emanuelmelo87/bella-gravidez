@@ -761,8 +761,8 @@ export default function App(){
     {id:"baby",         ic:"👶", img:"/icon-baby.png", l:"Bebê"},
     {id:"birthplan",    ic:"📋", l:"Plano de Parto"},
     {id:"health",       ic:"🩺", img:"/icon-health.png", l:"Saúde"},
-    {id:"tips",         ic:"💡", l:"Dicas"},
-    {id:"more",         ic:"🗂️", l:"Mais"},
+    {id:"tips",         ic:"💡", img:"/icon-tips.png", l:"Dicas"},
+    {id:"more",         ic:"🗂️", img:"/icon-more.png", l:"Mais"},
   ];
 
   // Filtro de visibilidade por item (por pessoa)
