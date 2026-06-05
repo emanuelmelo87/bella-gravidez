@@ -158,6 +158,14 @@ export default function Legal({ onClose }) {
           <span style={{ fontSize: 14, fontWeight: 500, color: "#dc2626" }}>Excluir minha conta e dados</span>
         </button>
       </div>
+
+      {/* Créditos / atribuições */}
+      <div style={{ marginTop: 20, paddingTop: 14, borderTop: `1px solid ${C.bege}`, fontSize: 11, color: C.taupe, lineHeight: 1.6, textAlign: "center" }}>
+        <div style={{ fontWeight: 500, marginBottom: 4, letterSpacing: .5 }}>Créditos</div>
+        Alguns ícones por{" "}
+        <a href="https://www.flaticon.com/br/icones-gratis/botao-home" target="_blank" rel="noopener noreferrer" style={{ color: C.rosa }}>Freepik — Flaticon</a>.
+        <div style={{ marginTop: 4 }}>Feito com 💜 — Bella Gravidez</div>
+      </div>
     </div>
   );
 }
