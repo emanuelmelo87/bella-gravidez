@@ -755,7 +755,7 @@ export default function App(){
   // Todas as seções do app (fonte única). primary = aparece na barra inferior do celular.
   const SECTIONS=[
     {id:"home",         ic:"🏠", l:"Início",        primary:true},
-    {id:"diary",        ic:"📖", l:"Diário",         primary:true},
+    {id:"diary",        ic:"📖", img:"/icon-diary.png", l:"Diário",         primary:true},
     {id:"contractions", ic:"⏱️", l:"Contrações",     primary:true},
     {id:"birth",        ic:"🌟", l:"Parto",          primary:true},
     {id:"baby",         ic:"👶", l:"Bebê"},
@@ -862,7 +862,7 @@ export default function App(){
         <div className="NAV">
           {SECTIONS.map(n=>(
             <button key={n.id} className={`nb ${n.primary?"":"sec"} ${tab===n.id?"A":""}`} onClick={()=>setTab(n.id)}>
-              <div className="ni">{n.ic}</div>
+              <div className="ni">{n.img ? <img src={n.img} alt={n.l} style={{width:22,height:22,objectFit:"contain"}}/> : n.ic}</div>
               <span className="nl">{n.l}</span>
             </button>
           ))}
@@ -883,7 +883,7 @@ export default function App(){
                   border:`1.5px solid ${tab===n.id?C.rosa:C.bege}`,
                   background:tab===n.id?`${C.rosa}18`:`${C.bege}22`,
                 }}>
-                  <span style={{fontSize:26}}>{n.ic}</span>
+                  {n.img ? <img src={n.img} alt={n.l} style={{width:26,height:26,objectFit:"contain"}}/> : <span style={{fontSize:26}}>{n.ic}</span>}
                   <span style={{fontSize:11,color:C.vinho,fontWeight:500,textAlign:"center"}}>{n.l}</span>
                 </button>
               ))}
