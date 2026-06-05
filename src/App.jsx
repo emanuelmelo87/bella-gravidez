@@ -754,7 +754,7 @@ export default function App(){
 
   // Todas as seções do app (fonte única). primary = aparece na barra inferior do celular.
   const SECTIONS=[
-    {id:"home",         ic:"🏠", l:"Início",        primary:true},
+    {id:"home",         ic:"🏠", img:"/icon-home.png", l:"Início",        primary:true},
     {id:"diary",        ic:"📖", img:"/icon-diary.png", l:"Diário",         primary:true},
     {id:"contractions", ic:"⏱️", l:"Contrações",     primary:true},
     {id:"birth",        ic:"🌟", l:"Parto",          primary:true},
