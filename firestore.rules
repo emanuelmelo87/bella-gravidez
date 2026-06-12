@@ -43,10 +43,20 @@ service cloud.firestore {
       return isOwner(pregnancyId) || isMember(pregnancyId);
     }
 
+    // Há um convite válido (não usado, mesma gestação e papel) para criar o membro?
+    function hasValidInvite() {
+      let inv = request.resource.data.inviteId;
+      return inv is string
+        && exists(/databases/$(database)/documents/pregnancyInvites/$(inv))
+        && get(/databases/$(database)/documents/pregnancyInvites/$(inv)).data.pregnancyId == request.resource.data.pregnancyId
+        && get(/databases/$(database)/documents/pregnancyInvites/$(inv)).data.role == request.resource.data.role
+        && get(/databases/$(database)/documents/pregnancyInvites/$(inv)).data.usedBy == null;
+    }
+
     // ─────────── Usuários ───────────
     match /users/{userId} {
-      allow read: if signedIn();          // perfis públicos básicos (nome/foto p/ membros)
-      allow write: if uid() == userId;    // só edita o próprio
+      allow read: if uid() == userId || isPlatformAdmin();  // só o próprio (admin lê p/ painel)
+      allow write: if uid() == userId;                      // só edita o próprio
     }
 
     // ─────────── Gestações ───────────
@@ -71,12 +81,20 @@ service cloud.firestore {
         resource.data.userId == uid() ||
         isOwner(resource.data.pregnancyId)
       );
-      // Cria: só a si mesmo, ao aceitar convite (userId == uid)
-      allow create: if signedIn() && request.resource.data.userId == uid();
-      // Atualiza: a dona da gestação (permissões/status) ou o próprio (sair)
+      // Cria: só a si mesmo E com um convite válido (impede auto-entrada sem convite)
+      allow create: if signedIn()
+        && request.resource.data.userId == uid()
+        && hasValidInvite();
+      // Atualiza: a dona muda tudo; o próprio só pode mexer em campos NÃO sensíveis
+      // (não pode alterar o próprio papel nem as próprias permissões)
       allow update: if signedIn() && (
         isOwner(resource.data.pregnancyId) ||
-        resource.data.userId == uid()
+        (
+          resource.data.userId == uid()
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.permissions == resource.data.permissions
+          && request.resource.data.pregnancyId == resource.data.pregnancyId
+        )
       );
       // Remove: dona ou o próprio
       allow delete: if signedIn() && (

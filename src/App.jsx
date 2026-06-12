@@ -759,7 +759,7 @@ export default function App(){
     {id:"contractions", ic:"⏱️", img:"/icon-contractions.png", l:"Contrações",     primary:true},
     {id:"birth",        ic:"🌟", img:"/icon-birth.png", l:"Parto",          primary:true},
     {id:"baby",         ic:"👶", img:"/icon-baby.png", l:"Bebê"},
-    {id:"birthplan",    ic:"📋", l:"Plano de Parto"},
+    {id:"birthplan",    ic:"📋", img:"/icon-plan.png", l:"Plano de Parto"},
     {id:"health",       ic:"🩺", img:"/icon-health.png", l:"Saúde"},
     {id:"tips",         ic:"💡", img:"/icon-tips.png", l:"Dicas"},
     {id:"more",         ic:"🗂️", img:"/icon-more.png", l:"Mais"},
@@ -868,7 +868,7 @@ export default function App(){
           ))}
           {/* Botão Menu — só no celular, abre todas as seções */}
           <button className={`nb menu ${["baby","birthplan","health","tips","more"].includes(tab)?"A":""}`} onClick={()=>setModal("menu")}>
-            <div className="ni">☰</div>
+            <div className="ni"><img src="/icon-menu.png" alt="Menu" style={{width:22,height:22,objectFit:"contain"}}/></div>
             <span className="nl">Menu</span>
           </button>
         </div>

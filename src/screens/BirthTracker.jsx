@@ -8,7 +8,7 @@ import { usePregnancy } from "../contexts/PregnancyContext";
 import { useAuth } from "../contexts/AuthContext";
 import { getColors } from "../styles/theme";
 
-const MILESTONES = [
+const DEFAULT_MILESTONES = [
   { key: "tampon",      label: "Tampão mucoso",          icon: "🔴", desc: "Saída do tampão cervical",                   repeatable: false },
   { key: "contractions_start", label: "Início das contrações", icon: "⏱️", desc: "Primeiras contrações percebidas",       repeatable: false },
   { key: "contractions_regular", label: "Contrações regulares", icon: "📊", desc: "A cada 5 min ou menos, mais de 1 hora", repeatable: false },
@@ -65,8 +65,29 @@ export default function BirthTracker() {
   const [customLabel, setCustomLabel] = useState("");
   const [saving, setSaving] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
+  const [platformMs, setPlatformMs] = useState([]);
 
   const pregnancyId = pregnancy?.id;
+
+  // Marcos definidos pelo Admin (com fallback para os padrões)
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "platformMilestones"), snap => {
+      setPlatformMs(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, () => {});
+    return unsub;
+  }, []);
+
+  // Lista efetiva: marcos do Admin (ativos, ordenados) enriquecidos com a
+  // config local (extras do nascimento, campo de dilatação). Senão, padrões.
+  const milestones = (() => {
+    const active = platformMs.filter(m => m.active !== false).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    if (active.length === 0) return DEFAULT_MILESTONES;
+    return active.map(m => {
+      const def = DEFAULT_MILESTONES.find(d => d.key === m.key) || {};
+      return { ...def, key: m.key, label: m.label, icon: m.icon, repeatable: m.repeatable };
+    });
+  })();
+  const msConfig = (key) => milestones.find(m => m.key === key) || DEFAULT_MILESTONES.find(m => m.key === key) || {};
 
   // Listeners Firestore
   useEffect(() => {
@@ -135,8 +156,8 @@ export default function BirthTracker() {
 
   // Quais marcos já foram registrados (não repetíveis)
   const registeredKeys = new Set(events.filter(e => {
-    const ms = MILESTONES.find(m => m.key === e.milestoneKey);
-    return ms && !ms.repeatable;
+    const ms = msConfig(e.milestoneKey);
+    return ms.key && !ms.repeatable;
   }).map(e => e.milestoneKey));
 
   const birthEvent = events.find(e => e.milestoneKey === "birth");
@@ -247,7 +268,7 @@ export default function BirthTracker() {
             <div className="card fu">
               <div className="ctit"><span>➕</span>Registrar marco</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {MILESTONES.map(ms => {
+                {milestones.map(ms => {
                   const done = registeredKeys.has(ms.key) && !ms.repeatable;
                   return (
                     <button key={ms.key + (ms.repeatable ? Date.now() : "")}

@@ -70,9 +70,10 @@ export function MembersProvider({ children }) {
     const memberSnap = await getDoc(memberRef);
     if (memberSnap.exists()) return { error: "already_member", pregnancyId: invite.pregnancyId };
 
-    // Cria o membro
+    // Cria o membro (inviteId é validado pelas regras do Firestore)
     await setDoc(memberRef, {
       pregnancyId: invite.pregnancyId,
+      inviteId,
       userId: user.uid,
       userEmail: user.email,
       userName: user.displayName,

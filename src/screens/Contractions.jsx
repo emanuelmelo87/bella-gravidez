@@ -109,7 +109,9 @@ export default function Contractions() {
   }
 
   const stats = calcStats(contractions);
-  const completed = contractions.filter(c => c.endedAt); // já vem desc (mais recente primeiro)
+  const startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+  // Só as contrações finalizadas de HOJE (a timeline diz "Hoje")
+  const completed = contractions.filter(c => c.endedAt && tms(c.startedAt) >= startOfToday.getTime());
   const intenseOf = v => INTENSITIES.find(x => x.v === v);
 
   return (

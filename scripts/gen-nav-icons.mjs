@@ -42,6 +42,18 @@ const ICONS = {
     <path d="M8 4 H16 L17.5 10 H6.5 Z"/>
     <line x1="12" y1="10" x2="12" y2="19"/>
     <path d="M9 19 H15 L16.5 21 H7.5 Z"/>`,
+  // Plano de Parto — prancheta com itens
+  "icon-plan": `
+    <rect x="5" y="4" width="14" height="17" rx="2.5"/>
+    <rect x="9" y="2.5" width="6" height="3.2" rx="1.4"/>
+    <line x1="8.5" y1="10" x2="15.5" y2="10"/>
+    <line x1="8.5" y1="13.5" x2="15.5" y2="13.5"/>
+    <line x1="8.5" y1="17" x2="13" y2="17"/>`,
+  // Menu — três linhas (hambúrguer)
+  "icon-menu": `
+    <line x1="4.5" y1="7" x2="19.5" y2="7"/>
+    <line x1="4.5" y1="12" x2="19.5" y2="12"/>
+    <line x1="4.5" y1="17" x2="19.5" y2="17"/>`,
 };
 
 for (const [name, inner] of Object.entries(ICONS)) {
